@@ -9,6 +9,7 @@
 #include <fstream>
 #include <ctime>
 #include <Windows.h>
+#include <locale.h>
 
 using namespace std;
 
@@ -18,6 +19,7 @@ void wait(int time) {
 
 // Esta função copia uma string para a área de transferência (clipboard) do Windows.
 void copy_clipboard(const string& txt_for_output) {
+
     // Abre a área de transferência.
     if (OpenClipboard(nullptr)) {
         // Limpa qualquer dado existente na área de transferência.
@@ -39,9 +41,11 @@ void copy_clipboard(const string& txt_for_output) {
 
             // Define o formato dos dados na área de transferência como texto simples (CF_TEXT).
             SetClipboardData(CF_TEXT, hClipboardData);
+
         }
 
         cout << "\033[32mO texto foi copiado para Area de transferencia!\033[0m\n\n";
+        wait(2000);
 
         // Fecha a área de transferência.
         CloseClipboard();
@@ -299,20 +303,23 @@ vector<string> performance_questions(string received_item) {
 
 }
 
-string final_way_several(vector<vector<string>> all_receivers) {
+string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
     string receiver_ip_swap, last_return;
     string msg_hour = msg_based_on_hour();
 
     regex rgx_unit("Unidade:");
     regex rgx_vmwa("VMWare:");
-
-    string item_type, padding;
+    regex rgx_normal("(?:M.tricas)?(?:Unidades)?"); //para fazer report normal sem nada
 
     //adicionar cada nome dos itens em um novo vector item_names para exibir.
 
+    string item_type;
+    string padding;
     string item_name_and_ip;
     string quebrar_linha;
+
+    vector<string> std_msgs;
 
     int all_receivers_last_item;
     int receiver_last_item;
@@ -325,19 +332,43 @@ string final_way_several(vector<vector<string>> all_receivers) {
         if (regex_search(receiver[0], rgx_unit)) {
             item_type = "Unidade";
             receiver_ip_swap = receiver[2];
+            padding = " | ";
+            std_msgs.push_back(" ");
+            std_msgs.push_back(" ip: ");
         }
         if (regex_search(receiver[0], rgx_vmwa)) {
             item_type = "VMWare";
             receiver_ip_swap = receiver[4];
+            padding = " | ";
+            std_msgs.push_back(" ");
+            std_msgs.push_back(" ip: ");
+        }
+        if (regex_search(receiver[0], rgx_normal)) {
+            item_type = "";
+            receiver_ip_swap = "";
+            padding = "";
+            std_msgs.push_back("");
+            std_msgs.push_back("");
+            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo..
         }
 
         //se não for a primeira vez
         if (count > 0) {
             quebrar_linha = "\n";
         }
-        padding = " | ";
 
-        item_name_and_ip = item_name_and_ip + quebrar_linha + item_type + " " + receiver[1] + " ip: " + receiver_ip_swap + padding + receiver[receiver_last_item] + " ";
+        //vector<string> final_return;
+
+        item_name_and_ip = item_name_and_ip
+        + quebrar_linha
+        + item_type
+        + std_msgs[0]
+        + receiver[1]
+        + std_msgs[1]
+        + receiver_ip_swap
+        + padding
+        + receiver[receiver_last_item]
+        + std_msgs[0];
 
         count++;
     }
@@ -350,7 +381,9 @@ string final_way_several(vector<vector<string>> all_receivers) {
         + "\n\n"    //quebra de linha dupla
         + item_name_and_ip;
 
-    copy_clipboard(last_return);
+    if(last_item == true){
+        copy_clipboard(last_return);
+    }
 
     return last_return;
 
@@ -377,10 +410,13 @@ string detect_type(string receiver_zero) {
 
 int main() {
 
-    string item, first_q, incident_type, full_incidents, backup_last_full_incidents;
+    setlocale(LC_ALL, "pt_BR.utf8");
+
+    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents;
     vector<vector<string>> all_receivers;
 
-    bool first_quest = true, second_report = false; //var que se ativa de cara, para a pergunta ser feita de primeira
+    bool first_quest = true; //var que se ativa de cara, para a pergunta ser feita de primeira
+    bool second_report = false;
 
     while (true) {
 
@@ -393,23 +429,41 @@ int main() {
         string item_type, use_report;
 
         if (first_quest == true) {
-            first_quest = false;
 
             limpar_tela();
 
-            /*
-            cout << "\n[1] Analisar Itens\n[2] Analisar e Reportar itens\n[3] Gerar report comum\n[4] Outros Reports\n\n> ";
+            cout << "\n[1] Gerar report normalizado\n[2] Analisar um ou mais itens\n[3] Analisar e Reportar um ou mais itens\n[4] Outros Reports (Elastic, Cartoes e etc)\n[5] Encerrar programa\n\n> ";
             first_q = getanswer();
 
-            regex rgx_choices("[" + first_q + "]");
-            if (regex_search("12", rgx_choices)) {
-                //fazer analise ou fazer analise e reportar depois
+        }
+
+        if (first_q == "1") {
+                
+            cout << "\nDe qual empresa deseja gerar o report normalizado?\n\n[1] BRK Ambiental\n[2] Qualy System\n[3] Data System\n[4] Odontoprev\n\n> ";
+            subfirst_q = getanswer();
+            
+            if(subfirst_q == "1"){
+                receiver.push_back("Unidades, VMwares e Sistemas Linux funcionando normalmente.");
             }
 
-            if (first_q == "3") {
-                //gerar texto de report comum, BRK, Qualy, Data
+            if(subfirst_q == "2"){
+                receiver.push_back("Métricas da Qualy System estão sendo coletadas normalmente.");
             }
-            */
+            
+            if(subfirst_q == "3"){
+                receiver.push_back("Métricas da DataSystem estão sendo coletadas normalmente.");
+            }
+
+            if(subfirst_q == "4"){
+                receiver.push_back("Métricas da Odontoprev estão sendo coletadas normalmente.");
+            }
+
+            all_receivers.push_back(receiver);
+            final_way_several(all_receivers, true);
+            
+        }
+
+        if((first_q == "2")||(first_q == "3")){
 
             cout << "\nDigite o item a ser analisado:\n\n> ";
             item = getanswer();
@@ -422,137 +476,165 @@ int main() {
 
             string::const_iterator searchStart(item.cbegin());
             while (regex_search(searchStart, item.cend(), smatch_comma_items, rgx_comma_items)) {
-
                 searchStart = smatch_comma_items.suffix().first;
                 items.push_back(smatch_comma_items[1]);
 
             }
             //
-        }
 
-        int count = 0;
-        for (string current_item : items) {
+            int count = 0;
+            for (string current_item : items) {
 
-            //limpar_tela();
-            //primeiro crio o vetor receiver com os dados do item, depois adiciono ele a ultima linha do vetor de vetores
-            vector<string> receiver = detect_item_type_single(current_item);
-            all_receivers.push_back(receiver);
+                //limpar_tela();
+                //primeiro crio o vetor receiver com os dados do item, depois adiciono ele a ultima linha do vetor de vetores
+                vector<string> receiver = detect_item_type_single(current_item);
+                all_receivers.push_back(receiver);
 
-            //fiz com que a funcao detect_item_type_single retorne o conjunto da mensagem em '0' do vector e exibir os dados do item na tela de uma vez. para facilitar.
-            limpar_tela();
-            cout << "\nInfomacoes do item:\n" << endl << receiver[0];
-
-            //neste codigo for, "receiver" sera o ultimo vetor listado em all_receivers.]
-            //uso meio que pra deixar o item anterior "guardado" e sempre usar o ultimo para mecher.
-            for (vector<string> actual_vector : all_receivers) {
-                receiver = actual_vector;
-            }
-
-            //detectar se é Unidade ou VMWare
-            detect_type(receiver[0]);
-
-            //ambas variaveis abaixo são vector<string>
-            //exibir todos os itens para o usuario no terminal passados pelo usuario na entrada e destacar o atual
-            string itens_show;
-            string current_item_colored;
-            int already_checked = 0;
-
-            int i = 0;
-            for (string actual_item : items) {
-                if (actual_item != current_item) {
-                    itens_show = itens_show + actual_item + " ";
-                }
-                else {
-                    itens_show = itens_show + "\033[33mO" + actual_item + "\033[0m" + " ";
-                    already_checked = i;
-                }
-                i++;
-            }
-            cout << "\nLista com todos os itens: " << itens_show << endl;
-
-            //mudar a cor do item ja verificado para verde usando 'i' do for.
-            items[already_checked] = "\033[32mO" + items[already_checked] + "\033[0m";
-
-            //
-
-            if (second_report == true) {
-                use_report = "\n[4] usar report do item anterior.";
-            }
-            else {
-                use_report = "";
-            }
-
-            //até aqui o ultimo vector de  all_receivers ja foi preenchido com as informações
-            //e também já sabemos qual o tipo do item, VM ou unidade
-
-            cout << "\nO que deseja fazer referente a" << item_type << " " << receiver[1] << " agora?:\n\n";
-            cout << "[1] Reiniciar programa\n" << "[2] Encerrar programa\n" << "\033[33m[3] Criar novo report\033[0m" << use_report << "\n\n> ";
-
-            item = getanswer();
-
-            if (item == "1") {
-                first_quest = true;
-                cin.ignore(); //limpar entrada cin (buffer)
+                //fiz com que a funcao detect_item_type_single retorne o conjunto da mensagem em '0' do vector e exibir os dados do item na tela de uma vez. para facilitar.
                 limpar_tela();
-                break;
-            }
+                cout << "\nInfomacoes do item:\n" << endl << receiver[0];
 
-            if (item == "2") {
-                exit(0);
-            }
+                //neste codigo for, "receiver" sera o ultimo vetor listado em all_receivers.]
+                //uso meio que pra deixar o item anterior "guardado" e sempre usar o ultimo para mecher.
+                for (vector<string> actual_vector : all_receivers) {
+                    receiver = actual_vector;
+                }
 
-            if (item == "3") {
+                //detectar se é Unidade ou VMWare
+                detect_type(receiver[0]);
 
-                second_report = true; //essa var serve para fazer a opção 4 só depois que o primeiro report for realizado.
+                //ambas variaveis abaixo são vector<string>
+                //exibir todos os itens para o usuario no terminal passados pelo usuario na entrada e destacar o atual
+                string itens_show;
+                string current_item_colored;
+                int already_checked = 0;
 
-                cout << "\nQual foi o tipo de incidente? \n" << "[1] Queda\n[2] Consumo de CPU\n[3] Consumo de Memoria\n[4] Consumo de Disco\n[5] Memoria Swap\n[6] Sysload\n[7] Temperatura\n\n> ";
-                item = getanswer();
+                int i = 0;
+                for (string actual_item : items) {
+                    if (actual_item != current_item) {
+                        itens_show = itens_show + actual_item + " ";
+                    }
+                    else {
+                        itens_show = itens_show + "\033[33mO" + actual_item + "\033[0m" + " ";
+                        already_checked = i;
+                    }
+                    i++;
+                }
+                cout << "\nLista com todos os itens: " << itens_show << endl;
 
-                //vector que ira ser preenchido com as respostas de desempenho, cpu, memoria etc
-                //depois iremos criar uma string concaternando as informações no for abaixo
-                vector<string> perf_questions = performance_questions(item);
+                //mudar a cor do item ja verificado para verde usando 'i' do for.
+                items[already_checked] = "\033[32mO" + items[already_checked] + "\033[0m";
 
-                for (string line : perf_questions) {
+                //
 
-                    //mensagens relacionadas a performance, concaternar todos os reports na string.
+                if(first_q == "2"){
+                    cout << "\n*****************************\nPressione Enter para ver o proximo item" << endl;
+                    cin.get();
+                    wait(500);
+                }
 
-                    if (!line.empty()) { //se line conter um report, adicioneo a string
+                if(first_q == "3"){
 
-                        if (full_incidents.empty()) { //verificar se a string esta vazia, se sim adicionar sem espaçamento.
-
-                            full_incidents = line;
-                        }
-                        else {
-                            full_incidents = full_incidents + " | " + line;
-
-                        }
-
+                    if (second_report == true) {
+                        use_report = "\n[4] usar report do item anterior.";
+                    }
+                    else {
+                        use_report = "";
                     }
 
+                    //até aqui o ultimo vector de  all_receivers ja foi preenchido com as informações
+                    //e também já sabemos qual o tipo do item, VM ou unidade
+
+                    cout << "\nO que deseja fazer referente a" << item_type << " " << receiver[1] << " agora?:\n\n";
+                    cout << "[1] Reiniciar programa\n" << "[2] Encerrar programa\n" << "\033[33m[3] Criar novo report\033[0m" << use_report << "\n\n> ";
+
+                    item = getanswer();
+
+                    if (item == "1") {
+                        first_quest = true;
+                        cin.ignore(); //limpar entrada cin (buffer)
+                        limpar_tela();
+                        break;
+                    }
+
+                    if (item == "2") {
+                        exit(0);
+                    }
+
+                    if (item == "3") {
+
+                        second_report = true; //essa var serve para fazer a opção 4 só depois que o primeiro report for realizado.
+
+                        cout << "\nQual foi o tipo de incidente? \n" << "[1] Queda\n[2] Consumo de CPU\n[3] Consumo de Memoria\n[4] Consumo de Disco\n[5] Memoria Swap\n[6] Sysload\n[7] Temperatura\n\n> ";
+                        item = getanswer();
+
+                        //vector que ira ser preenchido com as respostas de desempenho, cpu, memoria etc
+                        //depois iremos criar uma string concaternando as informações no for abaixo
+                        vector<string> perf_questions = performance_questions(item);
+
+                        for (string line : perf_questions) {
+
+                            //mensagens relacionadas a performance, concaternar todos os reports na string.
+
+                            if (!line.empty()) { //se line conter um report, adicioneo a string
+
+                                if (full_incidents.empty()) { //verificar se a string esta vazia, se sim adicionar sem espaçamento.
+
+                                    full_incidents = line;
+                                }
+                                else {
+                                    full_incidents = full_incidents + " | " + line;
+
+                                }
+
+                            }
+
+                        }
+                        //depois de adicionar o conteudo de identidade do item, iremos adicionar também seus incidentes no vetor de vetores 'all_receivers'
+                        //sub vetor "count" //tambem passaremos se estamos na ultima ocorrencia do for
+
+                        int items_size = items.size() -1;
+                        bool last_item = false;
+
+                        if(items_size == count){
+                            last_item = true;
+                        }
+
+                        all_receivers[count].push_back(full_incidents);
+                        final_way_several(all_receivers, last_item);
+
+                        backup_last_full_incidents = full_incidents; //antes de resetar full_incidents, deixar um backup para usar no 4 (mesmos incidentes)
+                        full_incidents = ""; //depois de incluir os incidentes na vector, resetar var para novos.
+                    }
                 }
-                //depois de adicionar o conteudo de identidade do item, iremos adicionar também seus incidentes no vetor de vetores 'all_receivers'
-                //sub vetor "count"
 
-                all_receivers[count].push_back(full_incidents);
-                final_way_several(all_receivers);
+                if (item == "4") {
+                    limpar_tela();
 
-                backup_last_full_incidents = full_incidents; //antes de resetar full_incidents, deixar um backup para usar no 4 (mesmos incidentes)
-                full_incidents = ""; //depois de incluir os incidentes na vector, resetar var para novos.
+                    //utilizar backup da ultima lista de incidents para repetir no item desejado
+                    all_receivers[count].push_back(backup_last_full_incidents); //adicionar ao novo report os itens de incident do anterior
+                    final_way_several(all_receivers, true);
 
+                }
+
+                count++;
             }
-
-            if (item == "4") {
-                limpar_tela();
-
-                //utilizar backup da ultima lista de incidents para repetir no item desejado
-                all_receivers[count].push_back(backup_last_full_incidents); //adicionar ao novo report os itens de incident do anterior
-                final_way_several(all_receivers);
-
-            }
-
-            count++;
         }
 
+        if(first_q == "4"){
+            cout << "\nQual problema esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
+            subfirst_q = getanswer();
+
+            if(subfirst_q == "1"){
+                //a quanto tempo os cartões não estão sendo coletados?
+            }
+
+        }
+
+        if(first_q == "5"){
+            cout << "\nObrigado por utilizar o AZReports! Finalizando.\n";
+            exit(0);
+        }
     }
 
     return 0;
