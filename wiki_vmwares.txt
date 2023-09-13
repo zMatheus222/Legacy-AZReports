@@ -1,0 +1,73 @@
+Máquina 78
+Port	Name	Container Name	Unid	IP
+9200	srvhvm04apg	vmware_exporter_apg01	APG	10.156.84.52
+9201	SRVHVM05APG	vmware_exporter_apg02	APG	10.156.84.57
+9202	srvhvm03apg	vmware_exporter_apg03	APG	10.156.84.51
+9203	SRVHVM003BLU	vmware_exporter_blu01	BLU	10.156.18.3
+9204	SRVHVM005BLU	vmware_exporter_blu02	BLU	10.156.18.5
+9205		vmware_exporter_cch01	CCH	10.156.14.61
+9206	SRVHVM002CCH	vmware_exporter_cch02	CCH	10.156.14.62
+9207	SRVHVM001CCH	vmware_exporter_cch03	CCH	10.156.14.64
+9226	SRVHVM003CCH	vmware_exporter_cch04	CCH	10.156.14.61
+9208	SRVHVM01CDR	vmware_exporter_cdr01	CDR	10.156.58.10
+9209		vmware_exporter_cdr02	CDR	10.156.58.40
+9210	SRVHVM001JAG	vmware_exporter_jag01	JAG	10.156.26.10
+9211		vmware_exporter_jti01	JTI	10.156.98.10
+9212	SRVHVM02JTI	vmware_exporter_jti02	JTI	10.156.98.20
+9213	SRVHVM03JTI	vmware_exporter_jti03	JTI	10.156.98.57
+9214	SRVHVM003LIM	vmware_exporter_lim01	LIM	10.156.10.11
+9215	SRVHVM001LIM	vmware_exporter_lim02	LIM	10.156.10.248
+9216	SRVHVM002LIM	vmware_exporter_lim03	LIM	10.156.10.54
+9217	SRVHVM005LIM	vmware_exporter_lim04	LIM	10.156.10.56
+9218	SRVHVM001MAI	vmware_exporter_mai01	MAI	10.156.36.10
+9219	SRVHVM003MAI	vmware_exporter_mai02	MAI	10.156.36.15
+9220		vmware_exporter_mai03	MAI	10.156.36.13
+9221	SRVHVM001MAN	vmware_exporter_man01	MAN	10.156.198.15
+9222	SRVHVM002MAN	vmware_exporter_man02	MAN	10.156.198.14
+9223	SRVHVM002MAU	vmware_exporter_mau01	MAU	10.156.16.23
+9224	SRVHVM003MAU	vmware_exporter_mau05	MAU	10.156.16.14
+9225		vmware_exporter_mau03	MAU	10.156.16.13
+Máquina 79
+Port	Name	Container Name	Unidade	IP
+9200	SRVHVM003MCE	vmware_exporter_mce01	MCE	10.156.80.18
+9201	SRVHVM001MCE	vmware_exporter_mce02	MCE	10.156.81.10
+9202	SRVHVM004MCE	vmware_exporter_mce03	MCE	10.156.81.36
+9203	SRVHVM002PDL	vmware_exporter_pdl02	PDL	10.156.180.10
+9204	SRVHVM001PDL	vmware_exporte_pdl01	PDL	10.156.180.11
+9205		vmware_exporte_pdl03	PDL	10.156.180.160
+9206	SRVHVM01PF	vmware_exporter_pfa01	PFA	10.156.50.10
+9207	SRVHVM002PFA	vmware_exporter_pfa02	PFA	10.156.50.15
+9208	SRVHVM001RCO	vmware_exporter_rco01	RCO	10.156.174.51
+9209	SRVHVM003RCO	vmware_exporter_rco02	RCO	10.156.174.55
+9210	SRVHVM003RDO	vmware_exporter_rdo01	RDO	10.156.42.18
+9211	SRVHVM004RDO	vmware_exporter_rdo02	RDO	10.156.42.36
+9212	SRVHVM005RDO	vmware_exporter_rdo03	RDO	10.156.42.37
+9214	SRVHVM002RDO	vmware_exporter_rdo05	RDO	10.156.42.9
+9215	srvhvm004rmm	vmware_exporter_rmm01	RMM	10.156.30.205
+9216	srvhvm003rmm	vmware_exporter_rmm02	RMM	10.156.30.201
+9217	SRHVM002RMR	vmware_exporter_rmr01	RMR	10.156.22.12
+9218	SRVHVM003RMR	vmware_exporter_rmr02	RMR	10.156.22.10
+9219	SRVHVM004RMR	vmware_exporter_rmr03	RMR	10.156.22.17
+9220		vmware_exporter_rmr04	RMR	10.156.22.45
+9221	SRVHVM001RMR	vmware_exporter_rmr05	RMR	10.156.22.15
+Máquina 76
+Port	Name	Container Name	Unidade	IP
+9200	SRVHVM01RVD	vmware_exporter_rvd01	RVD	10.156.86.10
+9201	srvhvm02rvd	vmware_exporter_rvd02	RVD	10.156.86.20
+9202	SRVHVM03RVD	vmware_exporter_rvd03	RVD	10.156.86.59
+9203	SRVHVM001SPO	vmware_exporter_spp01	SSP	10.156.76.145
+9205	SRVHVMW003SPO	vmware_exporter_ssp03	SSP	10.156.76.130
+9206	SRVHVM001STG	vmware_exporter_stg01	STG	10.156.20.16
+9207	SRVHVM002STG	vmware_exporter_stg02	STG	10.156.20.10
+9208	SRVHVM001SUM	vmware_exporter_sum01	SUM	10.156.188.2
+9209	SRVHVM002SUM	vmware_exporter_sum02	SUM	10.156.188.9
+9210	SRVHVM014TOC	vmware_exporter_toc01	TOC	10.156.100.70
+9211	srvhvm015toc	vmware_exporter_toc02	TOC	10.156.100.71
+9212	srvhvm016toc	vmware_exporter_toc03	TOC	10.156.100.72
+9213	srvhvm017toc	vmware_exporter_toc04	TOC	10.156.100.73
+9214	SRVHVM002TRD	vmware_exporter_trd01	TRD	10.156.96.10
+9215	SRVHVM001TRD	vmware_exporter_trd02	TRD	10.156.96.20
+9216	SRVHVM003TRD	vmware_exporter_trd03	TRD	10.156.96.57
+9217	SRVHVM001URU	vmware_exporter_uru01	URU	10.156.34.23
+9218	SRVHVM002URU	vmware_exporter_uru02	URU	10.156.34.22
+9219	SRVHVM003URU	vmware_exporter_uru03	URU	10.156.34.21
