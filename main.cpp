@@ -310,7 +310,7 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
     regex rgx_unit("Unidade:");
     regex rgx_vmwa("VMWare:");
-    regex rgx_normal("(?:M.tricas)?(?:Unidades)?"); //para fazer report normal sem nada
+    regex rgx_normal("(?:M.tricas)?(?:Unidades)?.*normalmente."); //para fazer report normal sem nada
 
     //adicionar cada nome dos itens em um novo vector item_names para exibir.
 
@@ -412,7 +412,7 @@ int main() {
 
     setlocale(LC_ALL, "pt_BR.utf8");
 
-    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents;
+    string item, first_q, subfirst_q, subsubfirst_q, incident_type, full_incidents, backup_last_full_incidents;
     vector<vector<string>> all_receivers;
 
     bool first_quest = true; //var que se ativa de cara, para a pergunta ser feita de primeira
@@ -622,11 +622,40 @@ int main() {
         }
 
         if(first_q == "4"){
+
+            //a ideia e que estes reports fiquem por ultimo de todos.
+
             cout << "\nQual problema esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
             subfirst_q = getanswer();
 
             if(subfirst_q == "1"){
-                //a quanto tempo os cartões não estão sendo coletados?
+                cout << "\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. [2] Especificar tempo da ultima coleta\n\n> " << endl;
+                subsubfirst_q = getanswer();
+                
+                if(subsubfirst_q == "1"){
+                    //tal variavel "Cartões não coletaram hoje." depois adicionar ao fim de todos os reports.
+                }
+
+                if(subsubfirst_q == "2"){
+                    //perguntar com outro cin desde quando os cartões não estão coletando.
+                }
+
+            }
+
+            if(subfirst_q == "2"){
+                //problemas relacionados a inventarios.
+            }
+
+            if(subfirst_q == "3"){
+                //problemas relacionados a Mastersaf - WEB (Up ou Down)
+            }
+
+            if(subfirst_q == "4"){
+                //problemas relacionados a ordens de serviço
+            }
+
+            if(subfirst_q == "5"){
+                //problemas relacionados ao ELASTIC
             }
 
         }
