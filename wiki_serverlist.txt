@@ -1,0 +1,13 @@
+10.156.5.74	SRVOBS002DCR	Azure exporter, OS Kollector, Inventário VMware, Integração com ServiceNow, Grafana, Docker Oracle, MySQL, MsSQL - Cartões	
+10.156.5.75	SRVOBS003DCR	Docker Oracle, Loki	
+10.156.5.76	SRVOBS004DCR	Servidor do Prometheus VMWare, Cadvisor, Docker unidades VMware	9090
+10.156.5.77	SRVOBS005DCR	Docker (não configurado)	
+10.156.5.78	SRVOBS006DCR	Docker unidades VMware, Cadvisor	9200 a 9301
+10.156.5.79	SRVOBS007DCR	Prometheus Windows, Cadvisor, Docker unidades VMware	9090
+10.180.68.13	SRVOBS001OCI	Elastic de DEV	5601
+10.180.68.2	SRVOBS002OCI	MySQL	
+10.180.68.12	SRVOBS003OCI	Servidor do Prometheus e Grafana DEV	9090/3000
+10.180.53.203	SRVOBS016OCI	Servidor do Prometheus Geral Prod, Alermanager, Grafana	9090/9093/3000
+10.180.52.235	SRVOBS017OCI	Elastic de Prod/ Servidor Grafana	5601
+10.180.68.4	SRVOBS004OCI	Private Location DEV	
+10.180.54.231	SRVOBS018OCI	Private Location PRD	

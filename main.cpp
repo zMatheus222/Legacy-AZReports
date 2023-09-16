@@ -13,6 +13,8 @@
 
 using namespace std;
 
+
+
 void wait(int time) {
     this_thread::sleep_for(std::chrono::milliseconds(time));
 }
@@ -303,6 +305,143 @@ vector<string> performance_questions(string received_item) {
 
 }
 
+string other_systems_questions(string received_item){
+
+    string resp_cartoes, resp_cartoes_hour, resp_inventarios, resp_inventarios_which, resp_mastersaf, resp_ordensdservico, resp_ordensdservico_time, resp_elastic, resp_elastic_clusters, resp_elastic_services, resp_elastic_traces, resp_elastic_stream;
+    regex rgx_choices("[" + received_item + "]"); //receber a resposta por exemplo '234' e colocar entre [234]
+    vector<string> mensagens;
+
+    string elastic_resp_conc; //variavel geral de todos os problemas reunidos.
+
+    if(regex_search("1", rgx_choices)){
+    cout << "\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. [2] Especificar tempo da ultima coleta\n> " << endl;
+    resp_cartoes = getanswer();
+
+        if(resp_cartoes == "1"){
+            mensagens.push_back("Cartoes nao coletaram hoje.");
+        }
+
+        if(resp_cartoes == "2"){
+            cout << "\nDigite [DD/MM as HH:MM] (Dia Mês Hora e Minuto.)\n> ";
+            resp_cartoes_hour = getanswer();
+            mensagens.push_back("Cartoes nao coletam desde: " + resp_cartoes_hour);
+        }
+
+    }
+
+    if(regex_search("2", rgx_choices)){
+        //problemas relacionados a inventarios.
+
+        if(resp_inventarios == "2"){
+            cout << "\nQual aba de inventario esta com problema?\n[1] Aba InfraOps\n[2] Aba CloudOps\n> " << endl;
+            resp_inventarios_which = getanswer();
+
+            if(regex_search(resp_inventarios_which, regex("^1$"))){
+                mensagens.push_back("Inventarios: Aba InfraOps nao esta trazendo metricas.");
+            }
+            if(regex_search(resp_inventarios_which, regex("^2$"))){
+                mensagens.push_back("Inventarios: Aba CloudOps nao esta trazendo metricas.");
+            }
+            if(regex_search(resp_inventarios_which, regex("\\d{2}"))){
+                mensagens.push_back("Inventarios: Abas CloudOps e InfraOps nao estao trazendo metricas.");
+            }
+
+        }
+
+    }
+
+    if(regex_search("3", rgx_choices)){
+        //problemas relacionados a Mastersaf - WEB (Up ou Down)
+
+        cout << "\nQuais das abas estao down?\n[1] OneSource PRD\n[2] DFE PRD\n> ";
+        resp_mastersaf = getanswer();
+
+        if(regex_search(resp_mastersaf, regex("^1$"))){
+            mensagens.push_back("Mastersaf: Aba OneSource esta down.");
+        }
+        if(regex_search(resp_mastersaf, regex("^2$"))){
+            mensagens.push_back("Mastersaf: Aba DFE PRD esta down.");
+        }
+        if(regex_search(resp_mastersaf, regex("\\d{2}"))){
+            mensagens.push_back("Mastersaf: Abas OneSource PRD e DFE PRD estao down.");
+        }
+        
+    }
+
+    if(regex_search("4", rgx_choices)){
+        //problemas relacionados a ordens de serviço
+
+        cout << "\nQuais problemas estao ocorrendo com as Ordens de serviço?\n[1] Ordem de serviço com mais de 40min\n[2] Kollector Status nao esta Running\n> ";
+        resp_ordensdservico = getanswer();
+
+        if(resp_ordensdservico == "1"){
+            mensagens.push_back("Identificamos as seguintes ordens passando dos 40min:");
+        }
+        if(resp_ordensdservico == "2"){
+            mensagens.push_back("Kollector Status nao esta Running");
+        }
+
+    }
+
+    if(regex_search("5", rgx_choices)){
+        //problemas relacionados ao ELASTIC
+
+        vector<string> elastic_problems;
+
+        cout << "\nQual problema relacionado ao elastic?\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream\n> ";
+        resp_elastic = getanswer();
+
+        if(regex_search(resp_elastic, regex("1"))){
+            elastic_problems.push_back("Elastic de DEV");
+        }
+
+        if(regex_search(resp_elastic, regex("2"))){
+            elastic_problems.push_back("Elastic de PROD");
+        }
+
+        if(regex_search(resp_elastic, regex("3"))){
+            
+            cout << "\nQual problema relacionado a cluster esta ocorrendo?\n[1] 'No monitoring data found'\n> ";
+            resp_elastic_clusters = getanswer();
+
+            if(resp_elastic_clusters == "1"){
+                elastic_problems.push_back("Aba cluster apresentando problemas na tentativa de acesso");
+            }
+
+        }
+
+        if(regex_search(resp_elastic, regex("4"))){
+            elastic_problems.push_back("Aba services sem trazer metricas.");
+        }
+
+        if(regex_search(resp_elastic, regex("5"))){
+            elastic_problems.push_back("Aba traces sem trazer metricas.");
+        }
+
+        if(regex_search(resp_elastic, regex("6"))){
+            
+            cout << "\nQual o problema relacionado a aba Stream?\n[1] Sem trazer logs a X tempo\n> ";
+            resp_elastic_stream = getanswer();
+
+            if(resp_elastic_stream == "1"){
+                cout << "\nDigite o momento que a ultima log chegou [DD:MM / HH:MM] :\n> ";
+                string resp_time = getanswer();
+                elastic_problems.push_back("Aba stream sem trazer logs, ultima log recebida as: " + resp_time);
+            }
+
+        }
+
+        for(string line : elastic_problems){
+            
+            //depois da linha que corresponde a area, dev ou prod, cada item será concaternado com |
+            cout << "elastic_problems: " << line << endl;
+            
+        }
+
+    }
+    return elastic_resp_conc;
+}
+
 string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
     string receiver_ip_swap, last_return;
@@ -412,11 +551,13 @@ int main() {
 
     setlocale(LC_ALL, "pt_BR.utf8");
 
-    string item, first_q, subfirst_q, subsubfirst_q, incident_type, full_incidents, backup_last_full_incidents;
+    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents;
     vector<vector<string>> all_receivers;
+    int count = 0;
 
     bool first_quest = true; //var que se ativa de cara, para a pergunta ser feita de primeira
     bool second_report = false;
+    bool last_item = false;
 
     while (true) {
 
@@ -424,26 +565,28 @@ int main() {
         vector<string> receiver;
 
         regex rgx_comma_items("([^,\\s+]+)"); //regex para coletar tudo que não seja virgula e espaços '^,\\s+'
+
         smatch smatch_comma_items;
 
         string item_type, use_report;
 
         if (first_quest == true) {
-
+            
             limpar_tela();
 
             cout << "\n[1] Gerar report normalizado\n[2] Analisar um ou mais itens\n[3] Analisar e Reportar um ou mais itens\n[4] Outros Reports (Elastic, Cartoes e etc)\n[5] Encerrar programa\n\n> ";
             first_q = getanswer();
+            //transforma a resposda do usuario em uma regex para usar como comparação abaixo
 
         }
 
-        if (first_q == "1") {
-                
+        if (regex_search(first_q, regex("[1]"))) {
+
             cout << "\nDe qual empresa deseja gerar o report normalizado?\n\n[1] BRK Ambiental\n[2] Qualy System\n[3] Data System\n[4] Odontoprev\n\n> ";
             subfirst_q = getanswer();
             
             if(subfirst_q == "1"){
-                receiver.push_back("Unidades, VMwares e Sistemas Linux funcionando normalmente.");
+                receiver.push_back("Unidades, VMwares e Sistemas Linux estao funcionando normalmente.");
             }
 
             if(subfirst_q == "2"){
@@ -463,7 +606,7 @@ int main() {
             
         }
 
-        if((first_q == "2")||(first_q == "3")){
+        if(regex_search(first_q, regex("[23]"))){
 
             cout << "\nDigite o item a ser analisado:\n\n> ";
             item = getanswer();
@@ -478,11 +621,10 @@ int main() {
             while (regex_search(searchStart, item.cend(), smatch_comma_items, rgx_comma_items)) {
                 searchStart = smatch_comma_items.suffix().first;
                 items.push_back(smatch_comma_items[1]);
-
             }
             //
 
-            int count = 0;
+            count = 0;
             for (string current_item : items) {
 
                 //limpar_tela();
@@ -527,13 +669,13 @@ int main() {
 
                 //
 
-                if(first_q == "2"){
+                if(regex_search(first_q,regex("[2]"))){
                     cout << "\n*****************************\nPressione Enter para ver o proximo item" << endl;
                     cin.get();
                     wait(500);
                 }
 
-                if(first_q == "3"){
+                if(regex_search(first_q,regex("[3]"))){
 
                     if (second_report == true) {
                         use_report = "\n[4] usar report do item anterior.";
@@ -576,7 +718,7 @@ int main() {
 
                             //mensagens relacionadas a performance, concaternar todos os reports na string.
 
-                            if (!line.empty()) { //se line conter um report, adicioneo a string
+                            if (!line.empty()) { //se line conter um report, adicione ele a string
 
                                 if (full_incidents.empty()) { //verificar se a string esta vazia, se sim adicionar sem espaçamento.
 
@@ -594,7 +736,7 @@ int main() {
                         //sub vetor "count" //tambem passaremos se estamos na ultima ocorrencia do for
 
                         int items_size = items.size() -1;
-                        bool last_item = false;
+                        last_item = false;
 
                         if(items_size == count){
                             last_item = true;
@@ -621,46 +763,20 @@ int main() {
             }
         }
 
-        if(first_q == "4"){
+        if(regex_search(first_q, regex("[4]")) && (last_item == true) || regex_search(first_q, regex("^4$"))){
 
-            //a ideia e que estes reports fiquem por ultimo de todos.
-
-            cout << "\nQual problema esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
+            //a ideia e que este report fique por ultimo de todos. por isso usamos last_item.
+            cout << "\nQuais outros problemas esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
             subfirst_q = getanswer();
 
-            if(subfirst_q == "1"){
-                cout << "\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. [2] Especificar tempo da ultima coleta\n\n> " << endl;
-                subsubfirst_q = getanswer();
-                
-                if(subsubfirst_q == "1"){
-                    //tal variavel "Cartões não coletaram hoje." depois adicionar ao fim de todos os reports.
-                }
+            string ot_sys_questions = other_systems_questions(subfirst_q);
 
-                if(subsubfirst_q == "2"){
-                    //perguntar com outro cin desde quando os cartões não estão coletando.
-                }
-
-            }
-
-            if(subfirst_q == "2"){
-                //problemas relacionados a inventarios.
-            }
-
-            if(subfirst_q == "3"){
-                //problemas relacionados a Mastersaf - WEB (Up ou Down)
-            }
-
-            if(subfirst_q == "4"){
-                //problemas relacionados a ordens de serviço
-            }
-
-            if(subfirst_q == "5"){
-                //problemas relacionados ao ELASTIC
-            }
+            all_receivers[count].push_back(full_incidents);
+            final_way_several(all_receivers, last_item);
 
         }
 
-        if(first_q == "5"){
+        if(regex_search(first_q, regex("[5]")) && (last_item == true)){
             cout << "\nObrigado por utilizar o AZReports! Finalizando.\n";
             exit(0);
         }
