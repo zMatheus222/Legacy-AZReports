@@ -10,7 +10,7 @@
 				"/EHsc",
 				"/nologo",
 				"/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
-				"${file}"
+				"${file}",
 				"data\\icon\\resource.rc",  // Adicione esta linha para incluir o arquivo .rc
 			],
 			"options": {

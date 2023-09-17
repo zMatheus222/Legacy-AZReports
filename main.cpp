@@ -16,7 +16,7 @@ using namespace std;
 
 
 void wait(int time) {
-    this_thread::sleep_for(std::chrono::milliseconds(time));
+    //this_thread::sleep_for(std::chrono::milliseconds(time));
 }
 
 // Esta função copia uma string para a área de transferência (clipboard) do Windows.
@@ -311,7 +311,7 @@ string other_systems_questions(string received_item){
     regex rgx_choices("[" + received_item + "]"); //receber a resposta por exemplo '234' e colocar entre [234]
     vector<string> mensagens;
 
-    string elastic_resp_conc; //variavel geral de todos os problemas reunidos.
+    string elastic_incidents; //variavel geral de todos os problemas reunidos.
 
     if(regex_search("1", rgx_choices)){
     cout << "\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. [2] Especificar tempo da ultima coleta\n> " << endl;
@@ -388,58 +388,85 @@ string other_systems_questions(string received_item){
 
         vector<string> elastic_problems;
 
-        cout << "\nQual problema relacionado ao elastic?\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream\n> ";
-        resp_elastic = getanswer();
+        while(true){
 
-        if(regex_search(resp_elastic, regex("1"))){
-            elastic_problems.push_back("Elastic de DEV");
-        }
+            cout << "\nQual problema relacionado ao elastic?\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream\n[7] Mais nenhum problema relacionado ao Elastic.\n> ";
+            resp_elastic = getanswer();
 
-        if(regex_search(resp_elastic, regex("2"))){
-            elastic_problems.push_back("Elastic de PROD");
-        }
-
-        if(regex_search(resp_elastic, regex("3"))){
-            
-            cout << "\nQual problema relacionado a cluster esta ocorrendo?\n[1] 'No monitoring data found'\n> ";
-            resp_elastic_clusters = getanswer();
-
-            if(resp_elastic_clusters == "1"){
-                elastic_problems.push_back("Aba cluster apresentando problemas na tentativa de acesso");
+            if(regex_search(resp_elastic, regex("1"))){
+                elastic_problems.push_back("Elastic de DEV");
             }
 
-        }
-
-        if(regex_search(resp_elastic, regex("4"))){
-            elastic_problems.push_back("Aba services sem trazer metricas.");
-        }
-
-        if(regex_search(resp_elastic, regex("5"))){
-            elastic_problems.push_back("Aba traces sem trazer metricas.");
-        }
-
-        if(regex_search(resp_elastic, regex("6"))){
-            
-            cout << "\nQual o problema relacionado a aba Stream?\n[1] Sem trazer logs a X tempo\n> ";
-            resp_elastic_stream = getanswer();
-
-            if(resp_elastic_stream == "1"){
-                cout << "\nDigite o momento que a ultima log chegou [DD:MM / HH:MM] :\n> ";
-                string resp_time = getanswer();
-                elastic_problems.push_back("Aba stream sem trazer logs, ultima log recebida as: " + resp_time);
+            if(regex_search(resp_elastic, regex("2"))){
+                elastic_problems.push_back("Elastic de PROD");
             }
 
-        }
+            if(regex_search(resp_elastic, regex("3"))){
+                
+                cout << "\nQual problema relacionado a cluster esta ocorrendo?\n[1] 'No monitoring data found'\n> ";
+                resp_elastic_clusters = getanswer();
 
-        for(string line : elastic_problems){
-            
-            //depois da linha que corresponde a area, dev ou prod, cada item será concaternado com |
-            cout << "elastic_problems: " << line << endl;
-            
+                if(resp_elastic_clusters == "1"){
+                    elastic_problems.push_back("Aba cluster apresentando problemas na tentativa de acesso");
+                }
+
+            }
+
+            if(regex_search(resp_elastic, regex("4"))){
+                elastic_problems.push_back("Aba services sem trazer metricas.");
+            }
+
+            if(regex_search(resp_elastic, regex("5"))){
+                elastic_problems.push_back("Aba traces sem trazer metricas.");
+            }
+
+            if(regex_search(resp_elastic, regex("6"))){
+                
+                cout << "\nQual o problema relacionado a aba Stream?\n[1] Sem trazer logs a X tempo\n> ";
+                resp_elastic_stream = getanswer();
+
+                if(resp_elastic_stream == "1"){
+                    cout << "\nDigite o momento que a ultima log chegou [DD:MM / HH:MM] :\n> ";
+                    string resp_time = getanswer();
+                    elastic_problems.push_back("Aba stream sem trazer logs, ultima log recebida as: " + resp_time);
+                }
+
+            }
+
+            if(regex_search(resp_elastic, regex("7"))){
+                cout << "\nCerto, finalizando o report do Elastic.";
+                break;
+            }
+
+            //concaternar incidentes do elastic lado a lado, com a area no inicio (prod ou dev.)
+            int count = 0;
+            int elastic_problems_size = elastic_problems.size() -1;
+            string elastic_incidents, elastic_area_saved;
+            string padding = " | ";
+            for(string line : elastic_problems){
+
+                    //salvar se o elastic e de dev ou prod. pois a area fica sempre em 0 no vector.
+                    if(count == 0){
+                        elastic_area_saved = line;
+                    }
+                    else{
+                        elastic_incidents = elastic_incidents + line + padding;         
+                    }
+
+                count++;
+
+                // se for a ultima linha do vector nao precisaremos mais do | para separar.
+                if(count == elastic_problems_size){
+                    padding = "";
+                }
+            }
+
+            elastic_incidents = elastic_area_saved + " " + elastic_incidents;
+            cout << "\n\nelastic_incidents:\n" << elastic_incidents << endl;
         }
 
     }
-    return elastic_resp_conc;
+    return elastic_incidents;
 }
 
 string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
@@ -764,15 +791,18 @@ int main() {
         }
 
         if(regex_search(first_q, regex("[4]")) && (last_item == true) || regex_search(first_q, regex("^4$"))){
-
+    
             //a ideia e que este report fique por ultimo de todos. por isso usamos last_item.
             cout << "\nQuais outros problemas esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
             subfirst_q = getanswer();
 
             string ot_sys_questions = other_systems_questions(subfirst_q);
 
-            all_receivers[count].push_back(full_incidents);
-            final_way_several(all_receivers, last_item);
+            //salvar string com incidentes do elastic e chamar final way
+
+            //base >>>>>>
+            //all_receivers[count].push_back(full_incidents);
+            //final_way_several(all_receivers, last_item);
 
         }
 
