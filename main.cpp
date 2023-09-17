@@ -16,7 +16,7 @@ using namespace std;
 
 
 void wait(int time) {
-    //this_thread::sleep_for(std::chrono::milliseconds(time));
+    this_thread::sleep_for(std::chrono::milliseconds(time));
 }
 
 // Esta função copia uma string para a área de transferência (clipboard) do Windows.
@@ -76,7 +76,7 @@ string getanswer() {
 
     string answer;
     getline(cin, answer);
-    wait(150);
+    wait(550);
 
     return answer;
 }
@@ -388,9 +388,24 @@ string other_systems_questions(string received_item){
 
         vector<string> elastic_problems;
 
-        while(true){
+        string elastic_initial_msg;
+        string elastic_quit_msg;
+        string elastic_incidents, elastic_area_saved;
+        bool elastic_first_time = true;
 
-            cout << "\nQual problema relacionado ao elastic?\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream\n[7] Mais nenhum problema relacionado ao Elastic.\n> ";
+        while(true){
+            
+            if(elastic_first_time == true){
+                elastic_first_time = false;
+                elastic_quit_msg = "";
+                elastic_initial_msg = "\nQual problema relacionado ao Elastic?";
+            }
+            else{
+                elastic_quit_msg = "\n[7] Mais nenhum problema relacionado ao Elastic.";
+                elastic_initial_msg = "\nMais algum problema relacionado ao Elastic?";
+            }
+
+            cout << elastic_initial_msg << "\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream" << elastic_quit_msg << "\n>";
             resp_elastic = getanswer();
 
             if(regex_search(resp_elastic, regex("1"))){
@@ -439,33 +454,44 @@ string other_systems_questions(string received_item){
             }
 
             //concaternar incidentes do elastic lado a lado, com a area no inicio (prod ou dev.)
-            int count = 0;
             int elastic_problems_size = elastic_problems.size() -1;
-            string elastic_incidents, elastic_area_saved;
+            
+            cout << "elastic_problems_size: " << elastic_problems_size << "\ncin.get()..." << endl;
+            cin.get();
+
             string padding = " | ";
+            int count = 0;
             for(string line : elastic_problems){
+
+                    // se for a ultima linha do vector nao precisaremos mais do | para separar.
+                    if(count == elastic_problems_size){
+                        padding = "";
+                    }
 
                     //salvar se o elastic e de dev ou prod. pois a area fica sempre em 0 no vector.
                     if(count == 0){
                         elastic_area_saved = line;
+                        cout << "entered if count == 0\nline: " << line << endl;
                     }
                     else{
-                        elastic_incidents = elastic_incidents + line + padding;         
+                        elastic_incidents = elastic_incidents + line + padding;
+                        cout << "entered elastic_incidents\nline: " << line << endl;
                     }
 
                 count++;
-
-                // se for a ultima linha do vector nao precisaremos mais do | para separar.
-                if(count == elastic_problems_size){
-                    padding = "";
-                }
             }
 
+            cout << "pre_elastic_incidents vars:\n" << "elastic_area_saved: " << elastic_area_saved << "\n" << "elastic_incidents: " << elastic_incidents << endl;
+            //ultimas mudanças
+
             elastic_incidents = elastic_area_saved + " " + elastic_incidents;
-            cout << "\n\nelastic_incidents:\n" << elastic_incidents << endl;
         }
 
     }
+
+    cout << "\nelastic_incidents: " << elastic_incidents << "\ncin.get()..." << endl;
+    cin.get();
+
     return elastic_incidents;
 }
 
@@ -477,6 +503,7 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
     regex rgx_unit("Unidade:");
     regex rgx_vmwa("VMWare:");
     regex rgx_normal("(?:M.tricas)?(?:Unidades)?.*normalmente."); //para fazer report normal sem nada
+    regex rgx_elastic("Elastic");
 
     //adicionar cada nome dos itens em um novo vector item_names para exibir.
 
@@ -510,6 +537,19 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
             std_msgs.push_back(" ip: ");
         }
         if (regex_search(receiver[0], rgx_normal)) {
+            item_type = "";
+            receiver_ip_swap = "";
+            padding = "";
+            std_msgs.push_back("");
+            std_msgs.push_back("");
+            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo..
+        }
+
+        if (regex_search(receiver[0], rgx_elastic)) {
+
+            cout << "entered rgx elastic" << endl;
+            cin.get();
+
             item_type = "";
             receiver_ip_swap = "";
             padding = "";
@@ -580,6 +620,8 @@ int main() {
 
     string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents;
     vector<vector<string>> all_receivers;
+    vector<vector<string>> bkp_all_receivers;
+
     int count = 0;
 
     bool first_quest = true; //var que se ativa de cara, para a pergunta ser feita de primeira
@@ -653,6 +695,13 @@ int main() {
 
             count = 0;
             for (string current_item : items) {
+
+                int items_size = items.size() -1;
+                last_item = false;
+                
+                if(items_size == count){
+                    last_item = true;
+                }
 
                 //limpar_tela();
                 //primeiro crio o vetor receiver com os dados do item, depois adiciono ele a ultima linha do vetor de vetores
@@ -762,18 +811,17 @@ int main() {
                         //depois de adicionar o conteudo de identidade do item, iremos adicionar também seus incidentes no vetor de vetores 'all_receivers'
                         //sub vetor "count" //tambem passaremos se estamos na ultima ocorrencia do for
 
-                        int items_size = items.size() -1;
-                        last_item = false;
-
-                        if(items_size == count){
-                            last_item = true;
-                        }
-
                         all_receivers[count].push_back(full_incidents);
+                        bkp_all_receivers = all_receivers; //backup do vector all_receivers antes de passar pelo reset.
                         final_way_several(all_receivers, last_item);
-
+                        
                         backup_last_full_incidents = full_incidents; //antes de resetar full_incidents, deixar um backup para usar no 4 (mesmos incidentes)
                         full_incidents = ""; //depois de incluir os incidentes na vector, resetar var para novos.
+
+                        if((last_item == true) && regex_match(first_q, regex("[4]"))){ //se for o ultimo item do checklist & tiver problemas de elastic, sair do loop
+                            cout << "regex last item break" << endl;
+                            break;
+                        }
                     }
                 }
 
@@ -782,15 +830,22 @@ int main() {
 
                     //utilizar backup da ultima lista de incidents para repetir no item desejado
                     all_receivers[count].push_back(backup_last_full_incidents); //adicionar ao novo report os itens de incident do anterior
+                    bkp_all_receivers = all_receivers; //backup do vector all_receivers novamente, para ser usado caso tenha os outros incidentes, elastic... etc..
                     final_way_several(all_receivers, true);
-
                 }
 
                 count++;
             }
         }
 
-        if(regex_search(first_q, regex("[4]")) && (last_item == true) || regex_search(first_q, regex("^4$"))){
+        bool regex_s1 = regex_search(first_q, regex("[4]"));
+        bool regex_s2 = regex_search(first_q, regex("^4$"));
+        cout << "regex_search(first_q, regex [4]): " << regex_s1 << "\nlast_item: " << last_item << "\nregex_search(first_q, regex ^4$): " << regex_s2;
+        cout << "\ncin.get()...\n";
+
+        cin.get();
+
+        if(regex_search(first_q, regex("[4]")) && (last_item == true) || (regex_search(first_q, regex("^4$")))){
     
             //a ideia e que este report fique por ultimo de todos. por isso usamos last_item.
             cout << "\nQuais outros problemas esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
@@ -798,11 +853,25 @@ int main() {
 
             string ot_sys_questions = other_systems_questions(subfirst_q);
 
+            cout << "ot_sys_questions:\n" << ot_sys_questions << endl << endl;
+            cin.get();
+
             //salvar string com incidentes do elastic e chamar final way
 
-            //base >>>>>>
-            //all_receivers[count].push_back(full_incidents);
-            //final_way_several(all_receivers, last_item);
+            int last_item_all_receivers = all_receivers.size() -1;
+
+            bkp_all_receivers[last_item_all_receivers + 1].push_back(ot_sys_questions);
+
+            for(vector<string> bkp_receiver : bkp_all_receivers){
+                cout << "\n\nentered bkp_receiver: \n\n";
+
+                for(string line : bkp_receiver){
+                    cout << "bkp_receiver_line>: " << line << endl;
+                    cin.get();
+                }
+            }
+
+            final_way_several(bkp_all_receivers, true);
 
         }
 
