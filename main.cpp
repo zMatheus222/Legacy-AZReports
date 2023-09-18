@@ -165,16 +165,19 @@ vector<string> detect_item_type_single(string item) {
     string var_return, vmware_machine;
     vector <string> wiki_units = txt_vetorize("wiki_units.txt");
     vector <string> wiki_vmwares = txt_vetorize("wiki_vmwares.txt");
+    vector <string> wiki_serverlists = txt_vetorize("wiki_serverlist.txt");
 
     regex rgx_line_unit("([A-Za-z]+[0-9]+[A-Za-z]+)\\s([0-9]+.[0-9]+.[0-9]+.[0-9]+)\\s(.*)");
     regex rgx_line_vmware("([0-9]+)\\s([A-Za-z]+[0-9]+[A-Za-z]+)\\s([A-Za-z]+\\_[A-Za-z]+\\_[A-Za-z]+[0-9]+)\\s([A-Za-z]+)\\s([0-9]+.[0-9]+.[0-9]+.[0-9]+)");
-    smatch smatch_wiki_units, smatch_wiki_vmwares;
+    regex rgx_line_serverlist("([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\\s+([A-Za-z]+[0-9]+[A-Za-z]+)\\s(.*)\\s?(\\d{4})?");
+    
+    smatch smatch_wiki_units, smatch_wiki_vmwares, smatch_wiki_serverlists;
 
     regex rgx_machine("[A-Z-a-z-Á-Ú-á-ú]+\\s([0-9]+)$");
     smatch smatch_machine;
 
     //vectors para exportação das informações //vec return para juntar as 2 vectors no return da função
-    vector<string> vec_unit, vec_vmware, vec_return;
+    vector<string> vec_unit, vec_vmware, vec_serverlists, vec_return;
 
     int count;
 
@@ -238,6 +241,31 @@ vector<string> detect_item_type_single(string item) {
             vec_vmware.push_back(full_loc);
 
             vec_return = vec_vmware;
+
+            break;
+        }
+        count++;
+    }
+    for (string line : wiki_serverlists) {
+
+        regex_search(line, smatch_wiki_serverlists, rgx_line_serverlist);
+        string serverlists_ip = smatch_wiki_serverlists[1];
+        string serverlists_host = smatch_wiki_serverlists[2];
+        string serverlists_descr = smatch_wiki_serverlists[3];
+        string serverlists_port = smatch_wiki_serverlists[4];
+
+        //se o usuario passou o nome / ip da unidade no cin
+        if ((item == serverlists_ip) || (item == serverlists_host)) {
+
+            var_return = "Servidor (Host): " + serverlists_host + "\nIp: " + serverlists_ip + "\nPorta: " + serverlists_port + "\nDescricao: " + serverlists_descr + "\n";
+
+            vec_serverlists.push_back(var_return);
+            vec_serverlists.push_back(serverlists_host);
+            vec_serverlists.push_back(serverlists_ip);
+            vec_serverlists.push_back(serverlists_port);
+            vec_serverlists.push_back(serverlists_descr);
+
+            vec_return = vec_serverlists;
 
             break;
         }
@@ -390,7 +418,7 @@ string other_systems_questions(string received_item){
 
         string elastic_initial_msg;
         string elastic_quit_msg;
-        string elastic_incidents, elastic_area_saved;
+        string elastic_incidents, elastic_area_saved, elastic_area = "";
         bool elastic_first_time = true;
 
         while(true){
@@ -408,13 +436,15 @@ string other_systems_questions(string received_item){
             cout << elastic_initial_msg << "\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream" << elastic_quit_msg << "\n>";
             resp_elastic = getanswer();
 
+            //elastic_area // prod ou dev
             if(regex_search(resp_elastic, regex("1"))){
-                elastic_problems.push_back("Elastic de DEV");
+                elastic_area = "Elastic de DEV - ";
             }
 
             if(regex_search(resp_elastic, regex("2"))){
-                elastic_problems.push_back("Elastic de PROD");
+                elastic_area = "Elastic de PROD - ";
             }
+            //
 
             if(regex_search(resp_elastic, regex("3"))){
                 
@@ -449,61 +479,50 @@ string other_systems_questions(string received_item){
             }
 
             if(regex_search(resp_elastic, regex("7"))){
-                cout << "\nCerto, finalizando o report do Elastic.";
-                break;
+                cout << "\nCerto, finalizando o report do Elastic.\n";
+                return elastic_incidents;
             }
 
             //concaternar incidentes do elastic lado a lado, com a area no inicio (prod ou dev.)
             int elastic_problems_size = elastic_problems.size() -1;
-            
-            cout << "elastic_problems_size: " << elastic_problems_size << "\ncin.get()..." << endl;
-            cin.get();
 
+            string elastic_stringmatch = "";
             string padding = " | ";
             int count = 0;
+
             for(string line : elastic_problems){
 
-                    // se for a ultima linha do vector nao precisaremos mais do | para separar.
-                    if(count == elastic_problems_size){
-                        padding = "";
-                    }
+                // se for a ultima linha do vector nao precisaremos mais do | para separar.
+                if(count == elastic_problems_size){
+                    padding = "";
+                }
 
-                    //salvar se o elastic e de dev ou prod. pois a area fica sempre em 0 no vector.
-                    if(count == 0){
-                        elastic_area_saved = line;
-                        cout << "entered if count == 0\nline: " << line << endl;
-                    }
-                    else{
-                        elastic_incidents = elastic_incidents + line + padding;
-                        cout << "entered elastic_incidents\nline: " << line << endl;
-                    }
+                elastic_stringmatch = line + padding;
 
                 count++;
             }
+            
+            cout << "\n\n**********elastic_incidents**********\n";
 
-            cout << "pre_elastic_incidents vars:\n" << "elastic_area_saved: " << elastic_area_saved << "\n" << "elastic_incidents: " << elastic_incidents << endl;
-            //ultimas mudanças
+            elastic_incidents = elastic_incidents + elastic_area + elastic_stringmatch + "\n";
 
-            elastic_incidents = elastic_area_saved + " " + elastic_incidents;
+            cout << "\n\n" << elastic_incidents << "\n\n";
+
+            cout << "\n**********elastic_incidents**********\n";
+
+            cin.get();
+
         }
 
     }
 
-    cout << "\nelastic_incidents: " << elastic_incidents << "\ncin.get()..." << endl;
-    cin.get();
-
-    return elastic_incidents;
+    return "abc";
 }
 
 string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
     string receiver_ip_swap, last_return;
     string msg_hour = msg_based_on_hour();
-
-    regex rgx_unit("Unidade:");
-    regex rgx_vmwa("VMWare:");
-    regex rgx_normal("(?:M.tricas)?(?:Unidades)?.*normalmente."); //para fazer report normal sem nada
-    regex rgx_elastic("Elastic");
 
     //adicionar cada nome dos itens em um novo vector item_names para exibir.
 
@@ -522,21 +541,21 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
         all_receivers_last_item = all_receivers.size() - 1; //posição final do vetor all_receivers
         receiver_last_item = receiver.size() - 1; //posição final do vetor receivers
 
-        if (regex_search(receiver[0], rgx_unit)) {
+        if (regex_search(receiver[0], regex("Unidade:"))) {
             item_type = "Unidade";
             receiver_ip_swap = receiver[2];
             padding = " | ";
             std_msgs.push_back(" ");
             std_msgs.push_back(" ip: ");
         }
-        if (regex_search(receiver[0], rgx_vmwa)) {
+        if (regex_search(receiver[0], regex("VMWare:"))) {
             item_type = "VMWare";
             receiver_ip_swap = receiver[4];
             padding = " | ";
             std_msgs.push_back(" ");
             std_msgs.push_back(" ip: ");
         }
-        if (regex_search(receiver[0], rgx_normal)) {
+        if (regex_search(receiver[0], regex("(?:M.tricas)?(?:Unidades)?.*normalmente."))) {
             item_type = "";
             receiver_ip_swap = "";
             padding = "";
@@ -545,25 +564,20 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
             receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo..
         }
 
-        if (regex_search(receiver[0], rgx_elastic)) {
-
-            cout << "entered rgx elastic" << endl;
-            cin.get();
-
+        if (regex_search(receiver[0], regex("Elastic"))) {
             item_type = "";
             receiver_ip_swap = "";
             padding = "";
+            std_msgs.clear(); //limpar vector dos itens anteriores.
             std_msgs.push_back("");
             std_msgs.push_back("");
-            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo..
+            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo.. assim ele ira ser pego la em baixo na variavel.
         }
 
         //se não for a primeira vez
         if (count > 0) {
             quebrar_linha = "\n";
         }
-
-        //vector<string> final_return;
 
         item_name_and_ip = item_name_and_ip
         + quebrar_linha
@@ -677,7 +691,7 @@ int main() {
 
         if(regex_search(first_q, regex("[23]"))){
 
-            cout << "\nDigite o item a ser analisado:\n\n> ";
+            cout << "\nDigite o item a ser analisado (Unidade, VMWare, IP, container_name):\n\n> ";
             item = getanswer();
 
             //usuario podera colocar 1 ou mais itens, separados por virgula.
@@ -838,39 +852,20 @@ int main() {
             }
         }
 
-        bool regex_s1 = regex_search(first_q, regex("[4]"));
-        bool regex_s2 = regex_search(first_q, regex("^4$"));
-        cout << "regex_search(first_q, regex [4]): " << regex_s1 << "\nlast_item: " << last_item << "\nregex_search(first_q, regex ^4$): " << regex_s2;
-        cout << "\ncin.get()...\n";
-
-        cin.get();
-
         if(regex_search(first_q, regex("[4]")) && (last_item == true) || (regex_search(first_q, regex("^4$")))){
     
             //a ideia e que este report fique por ultimo de todos. por isso usamos last_item.
-            cout << "\nQuais outros problemas esta ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
+            cout << "\nQuais outros problemas estao ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
             subfirst_q = getanswer();
 
             string ot_sys_questions = other_systems_questions(subfirst_q);
 
-            cout << "ot_sys_questions:\n" << ot_sys_questions << endl << endl;
-            cin.get();
-
             //salvar string com incidentes do elastic e chamar final way
 
-            int last_item_all_receivers = all_receivers.size() -1;
-
-            bkp_all_receivers[last_item_all_receivers + 1].push_back(ot_sys_questions);
-
-            for(vector<string> bkp_receiver : bkp_all_receivers){
-                cout << "\n\nentered bkp_receiver: \n\n";
-
-                for(string line : bkp_receiver){
-                    cout << "bkp_receiver_line>: " << line << endl;
-                    cin.get();
-                }
-            }
-
+            vector<string> vec_other_questions;
+            vec_other_questions.push_back(ot_sys_questions); //adicionar string de other_questions ao vetor que sera colocado no final do vetor de vetores.
+            
+            bkp_all_receivers.push_back(vec_other_questions);
             final_way_several(bkp_all_receivers, true);
 
         }
