@@ -180,7 +180,7 @@ string location_more(string loc) {
 
 vector<string> detect_item_type_single(string item) {
 
-    string var_return, vmware_machine;
+    string var_return, vmware_machine_number;
     vector <string> wiki_units = txt_vetorize("wiki_units.txt");
     vector <string> wiki_vmwares = txt_vetorize("wiki_vmwares.txt");
     vector <string> wiki_serverlists = txt_vetorize("wiki_serverlist.txt");
@@ -194,8 +194,11 @@ vector<string> detect_item_type_single(string item) {
     regex rgx_machine("[A-Z-a-z-Á-Ú-á-ú]+\\s([0-9]+)$");
     smatch smatch_machine;
 
+    regex rgx_machine_number("[0-9]+.[0-9]+.[0-9]+.("+item+")"); //essa regex recebe o numero da maquina para detectar qual host dessa maquina
+    smatch smatch_machine_number;
+
     //vectors para exportação das informações //vec return para juntar as 2 vectors no return da função
-    vector<string> vec_unit, vec_vmware, vec_serverlists, vec_return;
+    vector<string> vec_unit, vec_vmware, vec_serverlists, vec_machine_number, vec_return;
 
     int count;
 
@@ -235,7 +238,7 @@ vector<string> detect_item_type_single(string item) {
 
         //pegar a maquina e sair da condicao
         if (regex_search(line, smatch_machine, rgx_machine)) {
-            vmware_machine = smatch_machine[1];
+            vmware_machine_number = smatch_machine[1];
         }
 
         regex_search(line, smatch_wiki_vmwares, rgx_line_vmware);
@@ -249,11 +252,11 @@ vector<string> detect_item_type_single(string item) {
 
         if ((item == vmware_name) || (item == vmware_ip) || (item == vmware_container)) {
 
-            var_return = "\x1B[36mVMWare\x1B[0m: " + vmware_name + "\nMaquina: " + vmware_machine + "\nContainer name: " + vmware_container + "\nip: " + vmware_ip + "\nPorta: " + vmware_port + "\nLocalizacao: [" + vmware_loc + "] " + full_loc + "\n";
+            var_return = "\x1B[36mVMWare\x1B[0m: " + vmware_name + "\nMaquina: " + vmware_machine_number + "\nContainer name: " + vmware_container + "\nip: " + vmware_ip + "\nPorta: " + vmware_port + "\nLocalizacao: [" + vmware_loc + "] " + full_loc + "\n";
 
             vec_vmware.push_back(var_return);
             vec_vmware.push_back(vmware_name);
-            vec_vmware.push_back(vmware_machine);
+            vec_vmware.push_back(vmware_machine_number);
             vec_vmware.push_back(vmware_container);
             vec_vmware.push_back(vmware_ip);
             vec_vmware.push_back(vmware_port);
@@ -293,6 +296,30 @@ vector<string> detect_item_type_single(string item) {
         count++;
     }
 
+    if(regex_search(item, regex("^\\d{1,3}$"))){//se for um numero de maquina
+
+        for (string line : wiki_serverlists) { //pega o numero da maquina que foi passado e retorna o nome dela
+
+            bool matched = regex_search(line, smatch_machine_number, rgx_line_serverlist);
+
+            string serverlists_ip, serverlists_host;
+            if(matched == true){
+                serverlists_ip = smatch_machine_number[1];
+                serverlists_host = smatch_machine_number[2];
+            }
+
+            //se o usuario passou o nome / ip da unidade no cin
+            if (regex_search(line, rgx_machine_number)) { //se o numero da maquina passado em item bater com a maquina atual do for
+
+                vec_machine_number.push_back(serverlists_host); //salvar hostname da maquina na posição 0 da vector.
+                vec_return = vec_machine_number;
+
+                break;
+            }
+            count++;
+        }
+    }
+        
     return vec_return;
 
 }
@@ -307,7 +334,7 @@ string pick_path(string item_path, string item_name){
     return "ERROR";
 }
 
-vector<string> performance_questions(string received_item, string item_type, string item_ip) {
+vector<string> performance_questions(string received_item, string item_type, string item_ip, string vmware_machine_number, string vmware_container_name) {
 
     regex rgx_choices("[" + received_item + "]"); //receber a resposta por exemplo '234' e colocar entre [234]
 
@@ -366,8 +393,54 @@ vector<string> performance_questions(string received_item, string item_type, str
                 cout << "\n[4] Gerar <ip>/ui e abrir no navegador\n> ";
 
                 resp_acessoui = getanswer();
-                if (resp_acessoui == "1") {
-                    mensagens.push_back("com acesso no /ui");
+                if (resp_acessoui == "1") { //consegui acesso no /ui
+                    
+                    cout << "\nConseguiu fazer login e senha no /ui?\n[1] Sim\n[2] Nao\n\n#Ferramentas:\n[3] Obter usuário e senha" << endl;
+                    string resp_loginsenha = getanswer();
+
+                    if(resp_loginsenha == "1"){ //consegui fazer login e senha no /ui
+
+                        
+
+                        while(true){
+                            cout << "\nConseguiu ou fazer o docker restart <container_name> nessa vmware?\n[1] Sim\n[2] Nao\n\n#Ferramentas\n[3] Abrir PuTTY, e copiar o IP da maquina desta VMWare\n[4] Gerar docker restart <container_name> desta VMWare e copiar\n> " << endl;
+                            string resp_docker_restart = getanswer();
+
+                            if(resp_docker_restart == "1"){ //consegui fazer docker restart
+                                mensagens.push_back("Ambiente normalizado");
+                                break;
+                            }
+
+                            if(resp_docker_restart == "2"){
+                                mensagens.push_back("com acesso no /ui, com acesso ao login e senha, porem ainda com problemas");
+                                break;
+                            }
+
+                            if (resp_docker_restart == "3") { 
+                                
+                                vector<string> machine_host_name = detect_item_type_single(vmware_machine_number); //pegar hostname da maquina passando o numero dela
+                                vector<string> machine_infos = detect_item_type_single(machine_host_name[0]); //pegar o ip da maquina passando o hostname dela.
+                                string machine_ip = machine_infos[2]; //o ip para servidores e unidades estão sempre na posição 2 do retorno de detect_item_type, salvar na string machine_ip.
+
+                                copy_clipboard(machine_ip); //copiar o ip da maquina relacionada a essa vmware
+                                open_url(putty_path, "PuTTY", machine_ip);
+
+                            }
+
+                            if (resp_docker_restart == "4") {
+                                string docker_restart_commandline = "docker restart " + vmware_container_name;
+                                copy_clipboard(docker_restart_commandline);
+                            }
+
+                        }
+                        
+
+                    }
+
+                    if(resp_loginsenha == "2"){ //nao consegui fazer login e senha no /ui
+                        mensagens.push_back("com acesso no /ui, com erro de login e senha");
+                    }
+
                     break;
                 }
                 if (resp_acessoui == "2") {
@@ -718,7 +791,7 @@ int main() {
 
     setlocale(LC_ALL, "pt_BR.utf8");
 
-    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents, item_ip;
+    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents, item_ip, vmware_machine_number, vmware_container_name;
     vector<vector<string>> all_receivers;
     vector<vector<string>> bkp_all_receivers;
 
@@ -829,9 +902,13 @@ int main() {
                 //pegar ip do item
                 if(item_type == "Unidade"){
                     item_ip = receiver[2];
+                    vmware_machine_number = "";
+                    vmware_container_name = "";
                 }
                 if(item_type == "VMWare"){
                     item_ip = receiver[4];
+                    vmware_machine_number = receiver[2];
+                    vmware_container_name = receiver[3];
                 }
 
                 //ambas variaveis abaixo são vector<string>
@@ -891,7 +968,7 @@ int main() {
                         //vector que ira ser preenchido com as respostas de desempenho, cpu, memoria etc
                         //depois iremos criar uma string concaternando as informações no for abaixo
 
-                        vector<string> perf_questions = performance_questions(item, item_type, item_ip);
+                        vector<string> perf_questions = performance_questions(item, item_type, item_ip, vmware_machine_number, vmware_container_name);
 
                         for (string line : perf_questions) {
 
