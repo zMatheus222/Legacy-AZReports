@@ -1,0 +1,13 @@
+SRVSOA014DCR	10.156.4.209	observability/montdata.42X
+SRVWLS001DCR	10.156.4.207	observability/montdata.42X
+SRVSOA015DCR	10.156.4.210	observability/montdata.42X
+SRVSOA08DCR	10.156.5.96	observability/montdata.42X
+SRVSOA09DCR	10.156.5.91	observability/montdata.42X
+SRVOHSDMZ02-BRKBR	10.156.248.151	observability/1Zisoojqtbn0uslO
+SRVWLS001DCR	10.156.4.207	observability/montdata.42X
+SRVWLS002DCR	10.156.4.206	observability/montdata.42X
+SRVWLS003DCR	10.156.5.94	observability/montdata.42X
+SRVWLS004DCR	10.156.5.95	observability/montdata.42X
+SRVCRM001DCR	10.156.248.169	observability/montdata.42X
+SRVOHSPRD01	10.156.4.213	observability/montdata.42X
+SRVOHSPRD02	10.156.4.233	observability/montdata.42X

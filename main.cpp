@@ -54,6 +54,24 @@ void copy_clipboard(const string& txt_for_output) {
     }
 }
 
+void open_url(const string& url, string type, string item_ip){
+
+    wstring wideUrl(url.begin(), url.end()); // Converte a string C++ para LPCWSTR
+
+    HINSTANCE result = ShellExecuteW(NULL, L"open", wideUrl.c_str(), NULL, NULL, SW_SHOWNORMAL); //Essa linha de código executa a função ShellExecute, que é usada para abrir uma URL em um navegador padrão no Windows.:
+
+    if ((intptr_t)result <= 32) {
+        // Um valor de retorno menor ou igual a 32 indica um erro.
+        // Você pode tratar os erros aqui, se desejar.
+        // Por exemplo:
+        if ((intptr_t)result == ERROR_FILE_NOT_FOUND) {
+             cout << "URL não encontrada" << endl;
+        } else {
+             cout << "URL encontrada" << endl;
+        }
+    }
+}
+
 string pickhour() {
     // Obtém o horário atual
     chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -111,7 +129,7 @@ void limpar_tela() {
     system("clear");
 #endif
     cout << "*****************************\n";
-    cout << "*** AZReports - Checklist ***\n";
+    cout << "*** \x1B[35mAZReports\x1B[0m - Checklist ***\n";
     cout << "*****************************\n";
 }
 
@@ -195,7 +213,7 @@ vector<string> detect_item_type_single(string item) {
         //se o usuario passou o nome / ip da unidade no cin
         if ((item == unit_name) || (item == unit_ip)) {
 
-            var_return = "Unidade: " + unit_name + "\nIp: " + unit_ip + "\nLocalizacao: [" + full_loc + "] " + unit_loc + "\n";
+            var_return = "\x1B[32mUnidade\x1B[0m: " + unit_name + "\nIp: " + unit_ip + "\nLocalizacao: [" + full_loc + "] " + unit_loc + "\n";
 
             vec_unit.push_back(var_return);
             vec_unit.push_back(unit_name);
@@ -213,6 +231,8 @@ vector<string> detect_item_type_single(string item) {
     count = 0;
     for (string line : wiki_vmwares) {
 
+        //BUG: fazer diferenciação de maiuscula e minuscula: ex: SRVHVM004RMM (user input) srvhvm004rmm (wiki item)
+
         //pegar a maquina e sair da condicao
         if (regex_search(line, smatch_machine, rgx_machine)) {
             vmware_machine = smatch_machine[1];
@@ -229,7 +249,7 @@ vector<string> detect_item_type_single(string item) {
 
         if ((item == vmware_name) || (item == vmware_ip) || (item == vmware_container)) {
 
-            var_return = "VMWare: " + vmware_name + "\nMaquina: " + vmware_machine + "\nContainer name: " + vmware_container + "\nip: " + vmware_ip + "\nPorta: " + vmware_port + "\nLocalizacao: [" + vmware_loc + "] " + full_loc + "\n";
+            var_return = "\x1B[36mVMWare\x1B[0m: " + vmware_name + "\nMaquina: " + vmware_machine + "\nContainer name: " + vmware_container + "\nip: " + vmware_ip + "\nPorta: " + vmware_port + "\nLocalizacao: [" + vmware_loc + "] " + full_loc + "\n";
 
             vec_vmware.push_back(var_return);
             vec_vmware.push_back(vmware_name);
@@ -246,6 +266,7 @@ vector<string> detect_item_type_single(string item) {
         }
         count++;
     }
+    
     for (string line : wiki_serverlists) {
 
         regex_search(line, smatch_wiki_serverlists, rgx_line_serverlist);
@@ -257,7 +278,7 @@ vector<string> detect_item_type_single(string item) {
         //se o usuario passou o nome / ip da unidade no cin
         if ((item == serverlists_ip) || (item == serverlists_host)) {
 
-            var_return = "Servidor (Host): " + serverlists_host + "\nIp: " + serverlists_ip + "\nPorta: " + serverlists_port + "\nDescricao: " + serverlists_descr + "\n";
+            var_return = "\x1B[35mServidor (Host)\x1B[0m: " + serverlists_host + "\nIp: " + serverlists_ip + "\nPorta: " + serverlists_port + "\nDescricao: " + serverlists_descr + "\n";
 
             vec_serverlists.push_back(var_return);
             vec_serverlists.push_back(serverlists_host);
@@ -276,39 +297,94 @@ vector<string> detect_item_type_single(string item) {
 
 }
 
-vector<string> performance_questions(string received_item) {
+string pick_path(string item_path, string item_name){
+
+    vector<string> pathes = txt_vetorize(item_path);
+    if(item_name == "PuTTY"){
+        return pathes[0];
+    }
+
+    return "ERROR";
+}
+
+vector<string> performance_questions(string received_item, string item_type, string item_ip) {
 
     regex rgx_choices("[" + received_item + "]"); //receber a resposta por exemplo '234' e colocar entre [234]
 
-    string resp_acessossh, resp_acessoui;
+    string resp_acessossh, resp_acessoui, string_uiline;
     vector<string> mensagens;
+
+    string putty_path = pick_path("item_path.txt", "PuTTY") + "\\putty.exe"; //abrir arquivo com o caminho do PuTTY do usuario para depois utilizar o mesmo para abrir
 
     if (regex_search("1", rgx_choices)) {
 
         mensagens.push_back("sem trazer metricas");
 
-        cout << "Ja tentou fazer o acesso SSH?\n[1] Sim, e consegui acesso\n[2] Tentei fazer mas nao consegui acesso\n[3] apenas informar ausencia de metricas\n> " << endl;
-        resp_acessossh = getanswer();
+        if(regex_search(item_type, regex("Unidade"))){
 
-        if (resp_acessossh == "1") {
-            mensagens.push_back("com acesso ssh");
+            while(true){
+
+                cout << "\nJa tentou fazer o acesso SSH?";
+                cout << "\n[1] Sim, e consegui acesso";
+                cout << "\n[2] Tentei fazer mas nao consegui acesso";
+                cout << "\n\n#Acoes SSH";
+                cout << "\n[3] Copiar IP";
+                cout << "\n[4] Copiar IP e abrir PuTTY\n\n> ";
+                
+                resp_acessossh = getanswer();
+
+                if (resp_acessossh == "1") {
+                    mensagens.push_back("com acesso ssh");
+                    break;
+                }
+
+                if (resp_acessossh == "2") {
+                    mensagens.push_back("sem acesso SSH");
+                    break;
+                }
+
+                if ((resp_acessossh == "3")||(resp_acessossh == "4")) {
+                    copy_clipboard(item_ip);
+                }
+
+                if (resp_acessossh == "4") {
+                    open_url(putty_path, "PuTTY", item_ip);
+                }
+            }
+            
         }
 
-        if (resp_acessossh == "2") {
-            mensagens.push_back("sem acesso SSH");
+        if(regex_search(item_type, regex("VMWare"))){
+
+            //o loop serve para que o item 3 não faça sair da pergunta, ou seja so ira sair quando a reposta for 1 ou 2.
+            while(true){
+                cout << "Ja tentou fazer o acesso ui no navegador?";
+                cout << "\n[1] Sim, e consegui acesso";
+                cout << "\n[2] Tentei fazer mas nao consegui acesso";
+                cout << "\n\n#Acoes de acesso /ui";
+                cout << "\n[3] Gerar <ip>/ui e copiar para o Clipboard";
+                cout << "\n[4] Gerar <ip>/ui e abrir no navegador\n> ";
+
+                resp_acessoui = getanswer();
+                if (resp_acessoui == "1") {
+                    mensagens.push_back("com acesso no /ui");
+                    break;
+                }
+                if (resp_acessoui == "2") {
+                    mensagens.push_back("sem acesso no /ui");
+                    break;
+                }
+                if (resp_acessoui == "3") {
+                    string_uiline = item_ip + "/ui";
+                    copy_clipboard(string_uiline);
+                }
+                if (resp_acessoui == "4") {
+                    string_uiline = "https://" + item_ip + "/ui";
+                    open_url(string_uiline, "link/ui", "");
+                }
+            }
+            
         }
-
-        cout << "Ja tentou fazer o acesso ui no navegador?\n[1] Sim, e consegui acesso\n[2] Tentei fazer mas nao consegui acesso\n[3] apenas informar ausencia de metricas\n> " << endl;
-        resp_acessoui = getanswer();
-
-        if (resp_acessoui == "1") {
-            mensagens.push_back("com acesso no /ui");
-        }
-
-        if (resp_acessoui == "2") {
-            mensagens.push_back("sem acesso no /ui");
-        }
-
     }
     if (regex_search("2", rgx_choices)) {
         mensagens.push_back("alto consumo de CPU");
@@ -342,7 +418,11 @@ string other_systems_questions(string received_item){
     string elastic_incidents; //variavel geral de todos os problemas reunidos.
 
     if(regex_search("1", rgx_choices)){
-    cout << "\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. [2] Especificar tempo da ultima coleta\n> " << endl;
+
+    cout << "\nA quanto tempo os cartoes nao coletam?";
+    cout << "\n[1] Nao coletaram hoje. ";
+    cout << "\n[2] Especificar tempo da ultima coleta\n> ";
+
     resp_cartoes = getanswer();
 
         if(resp_cartoes == "1"){
@@ -354,7 +434,6 @@ string other_systems_questions(string received_item){
             resp_cartoes_hour = getanswer();
             mensagens.push_back("Cartoes nao coletam desde: " + resp_cartoes_hour);
         }
-
     }
 
     if(regex_search("2", rgx_choices)){
@@ -381,7 +460,10 @@ string other_systems_questions(string received_item){
     if(regex_search("3", rgx_choices)){
         //problemas relacionados a Mastersaf - WEB (Up ou Down)
 
-        cout << "\nQuais das abas estao down?\n[1] OneSource PRD\n[2] DFE PRD\n> ";
+        cout << "\nQuais das abas estao down?";
+        cout << "\n[1] OneSource PRD";
+        cout << "\n[2] DFE PRD\n> ";
+
         resp_mastersaf = getanswer();
 
         if(regex_search(resp_mastersaf, regex("^1$"))){
@@ -399,7 +481,11 @@ string other_systems_questions(string received_item){
     if(regex_search("4", rgx_choices)){
         //problemas relacionados a ordens de serviço
 
-        cout << "\nQuais problemas estao ocorrendo com as Ordens de serviço?\n[1] Ordem de serviço com mais de 40min\n[2] Kollector Status nao esta Running\n> ";
+        cout << "\nQuais problemas estao ocorrendo com as Ordens de serviço?";
+        cout << "\n[1] Ordem de serviço com mais de 40min";
+        cout << "" << endl;
+        cout << "\n[2] Kollector Status nao esta Running\n> ";
+
         resp_ordensdservico = getanswer();
 
         if(resp_ordensdservico == "1"){
@@ -433,7 +519,17 @@ string other_systems_questions(string received_item){
                 elastic_initial_msg = "\nMais algum problema relacionado ao Elastic?";
             }
 
-            cout << elastic_initial_msg << "\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream" << elastic_quit_msg << "\n>";
+            cout << elastic_initial_msg;
+            cout << "\n#Area do Elastic:";
+            cout << "\n[1] Dev";
+            cout << "\n[2] Prod";
+            cout << "\n#Problemas:";
+            cout << "\n[3] Clusters";
+            cout << "\n[4] Services";
+            cout << "\n[5] Traces";
+            cout << "\n[6] Stream";
+            cout << elastic_quit_msg << "\n>";
+
             resp_elastic = getanswer();
 
             //elastic_area // prod ou dev
@@ -502,15 +598,7 @@ string other_systems_questions(string received_item){
                 count++;
             }
             
-            cout << "\n\n**********elastic_incidents**********\n";
-
             elastic_incidents = elastic_incidents + elastic_area + elastic_stringmatch + "\n";
-
-            cout << "\n\n" << elastic_incidents << "\n\n";
-
-            cout << "\n**********elastic_incidents**********\n";
-
-            cin.get();
 
         }
 
@@ -541,14 +629,14 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
         all_receivers_last_item = all_receivers.size() - 1; //posição final do vetor all_receivers
         receiver_last_item = receiver.size() - 1; //posição final do vetor receivers
 
-        if (regex_search(receiver[0], regex("Unidade:"))) {
+        if (regex_search(receiver[0], regex("Unidade"))) {
             item_type = "Unidade";
             receiver_ip_swap = receiver[2];
             padding = " | ";
             std_msgs.push_back(" ");
             std_msgs.push_back(" ip: ");
         }
-        if (regex_search(receiver[0], regex("VMWare:"))) {
+        if (regex_search(receiver[0], regex("VMWare"))) {
             item_type = "VMWare";
             receiver_ip_swap = receiver[4];
             padding = " | ";
@@ -611,15 +699,13 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
 string detect_type(string receiver_zero) {
 
-    regex rgx_unit("Unidade:");
-    regex rgx_vmwa("VMWare:");
     string item_type;
 
     //detectar se é uma unidade ou vmware //fazer função depois.
-    if (regex_search(receiver_zero, rgx_unit)) {
+    if (regex_search(receiver_zero, regex("Unidade"))) {
         item_type = "Unidade";
     }
-    if (regex_search(receiver_zero, rgx_vmwa)) {
+    if (regex_search(receiver_zero, regex("VMWare"))) {
         item_type = "VMWare";
     }
     //
@@ -632,7 +718,7 @@ int main() {
 
     setlocale(LC_ALL, "pt_BR.utf8");
 
-    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents;
+    string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents, item_ip;
     vector<vector<string>> all_receivers;
     vector<vector<string>> bkp_all_receivers;
 
@@ -665,7 +751,12 @@ int main() {
 
         if (regex_search(first_q, regex("[1]"))) {
 
-            cout << "\nDe qual empresa deseja gerar o report normalizado?\n\n[1] BRK Ambiental\n[2] Qualy System\n[3] Data System\n[4] Odontoprev\n\n> ";
+            cout << "\nDe qual empresa deseja gerar o report normalizado?";
+            cout << "\n\n[1] BRK Ambiental";
+            cout << "\n[2] Qualy System";
+            cout << "\n[3] Data System";
+            cout << "\n[4] Odontoprev\n\n> ";
+
             subfirst_q = getanswer();
             
             if(subfirst_q == "1"){
@@ -691,7 +782,7 @@ int main() {
 
         if(regex_search(first_q, regex("[23]"))){
 
-            cout << "\nDigite o item a ser analisado (Unidade, VMWare, IP, container_name):\n\n> ";
+            cout << "\nDigite o item a ser analisado (\x1B[32mUnidade\x1B[0m, \x1B[36mVMWare\x1B[0m, IP, container_name):\n\n> ";
             item = getanswer();
 
             //usuario podera colocar 1 ou mais itens, separados por virgula.
@@ -724,16 +815,24 @@ int main() {
 
                 //fiz com que a funcao detect_item_type_single retorne o conjunto da mensagem em '0' do vector e exibir os dados do item na tela de uma vez. para facilitar.
                 limpar_tela();
-                cout << "\nInfomacoes do item:\n" << endl << receiver[0];
+                cout << "\nInfomacoes do item:\n" << endl << receiver[0] << endl;
 
                 //neste codigo for, "receiver" sera o ultimo vetor listado em all_receivers.]
                 //uso meio que pra deixar o item anterior "guardado" e sempre usar o ultimo para mecher.
                 for (vector<string> actual_vector : all_receivers) {
                     receiver = actual_vector;
                 }
-
+                
                 //detectar se é Unidade ou VMWare
-                detect_type(receiver[0]);
+                item_type = detect_type(receiver[0]);
+
+                //pegar ip do item
+                if(item_type == "Unidade"){
+                    item_ip = receiver[2];
+                }
+                if(item_type == "VMWare"){
+                    item_ip = receiver[4];
+                }
 
                 //ambas variaveis abaixo são vector<string>
                 //exibir todos os itens para o usuario no terminal passados pelo usuario na entrada e destacar o atual
@@ -747,7 +846,7 @@ int main() {
                         itens_show = itens_show + actual_item + " ";
                     }
                     else {
-                        itens_show = itens_show + "\033[33mO" + actual_item + "\033[0m" + " ";
+                        itens_show = itens_show + "\033[33m" + actual_item + "\033[0m" + " ";
                         already_checked = i;
                     }
                     i++;
@@ -755,7 +854,7 @@ int main() {
                 cout << "\nLista com todos os itens: " << itens_show << endl;
 
                 //mudar a cor do item ja verificado para verde usando 'i' do for.
-                items[already_checked] = "\033[32mO" + items[already_checked] + "\033[0m";
+                items[already_checked] = "\033[32m" + items[already_checked] + "\033[0m";
 
                 //
 
@@ -777,23 +876,12 @@ int main() {
                     //até aqui o ultimo vector de  all_receivers ja foi preenchido com as informações
                     //e também já sabemos qual o tipo do item, VM ou unidade
 
-                    cout << "\nO que deseja fazer referente a" << item_type << " " << receiver[1] << " agora?:\n\n";
-                    cout << "[1] Reiniciar programa\n" << "[2] Encerrar programa\n" << "\033[33m[3] Criar novo report\033[0m" << use_report << "\n\n> ";
+                    cout << "\nO que deseja fazer referente a " << item_type << " " << receiver[1] << " agora?:\n\n";
+                    cout  << "\033[33m[1] Criar novo report\033[0m\n[2] Copiar Hostname\n[3] Copiar IP\n[4] Copiar localizacao" << use_report << "\n\n> ";
 
                     item = getanswer();
 
                     if (item == "1") {
-                        first_quest = true;
-                        cin.ignore(); //limpar entrada cin (buffer)
-                        limpar_tela();
-                        break;
-                    }
-
-                    if (item == "2") {
-                        exit(0);
-                    }
-
-                    if (item == "3") {
 
                         second_report = true; //essa var serve para fazer a opção 4 só depois que o primeiro report for realizado.
 
@@ -802,7 +890,8 @@ int main() {
 
                         //vector que ira ser preenchido com as respostas de desempenho, cpu, memoria etc
                         //depois iremos criar uma string concaternando as informações no for abaixo
-                        vector<string> perf_questions = performance_questions(item);
+
+                        vector<string> perf_questions = performance_questions(item, item_type, item_ip);
 
                         for (string line : perf_questions) {
 
@@ -821,12 +910,13 @@ int main() {
 
                             }
 
-                        }
+                        }                    
+
                         //depois de adicionar o conteudo de identidade do item, iremos adicionar também seus incidentes no vetor de vetores 'all_receivers'
                         //sub vetor "count" //tambem passaremos se estamos na ultima ocorrencia do for
-
                         all_receivers[count].push_back(full_incidents);
                         bkp_all_receivers = all_receivers; //backup do vector all_receivers antes de passar pelo reset.
+
                         final_way_several(all_receivers, last_item);
                         
                         backup_last_full_incidents = full_incidents; //antes de resetar full_incidents, deixar um backup para usar no 4 (mesmos incidentes)
@@ -836,7 +926,23 @@ int main() {
                             cout << "regex last item break" << endl;
                             break;
                         }
+
                     }
+
+                    if (item == "2"){
+
+                    }
+                    if (item == "3"){
+
+                    }
+                    if (item == "4"){
+
+                    }
+                    if (item == "5"){
+
+                    }
+
+
                 }
 
                 if (item == "4") {
