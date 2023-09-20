@@ -638,83 +638,101 @@ string other_systems_questions(string received_item){
     return "abc";
 }
 
+string concatenador(vector<string> vec_itens, string type){
+
+    string item_type_single, item_type_more;
+
+    if(regex_search(type, regex("[Uu]nidades?"))){
+        item_type_single = "A Unidade ";
+        item_type_more = "As Unidades ";
+    }
+    else if(regex_search(type, regex("VMWares?"))){
+        item_type_single = "A VMWare ";
+        item_type_more = "As VMWares ";
+    }
+    else if(regex_search(type, regex("[Ss]ervidor"))){
+        item_type_single = "A Unidade AZCorp ";
+        item_type_more = "As Unidades AZCorp ";
+    }
+    else{
+        item_type_single = "Error (single) ";
+        item_type_more = "Error (more) ";
+    }
+
+    //depois de colocar cada item com seus detalhes na vector, pegar cada linha da vector e fazer a linha de report
+    string item_name_and_ip;
+    int count = 0;
+    int vec_itens_size = vec_itens.size() -1;
+    for(string line : vec_itens){
+
+        if(vec_itens_size == 0){ //se for apenas uma Unidade.
+            item_name_and_ip = item_type_single + line;
+        }
+
+        if((vec_itens_size >= 1) && (count == 0)){ //se for mais de uma unidade
+            item_name_and_ip = item_type_more + line + " | ";
+        }
+
+        if(count >= 1){ //continuar adicionando os itens
+            item_name_and_ip = item_name_and_ip + line;
+        }
+
+        if(count == vec_itens_size){ //quando chegar no ultimo retornar a quem chamou a função.
+            return item_name_and_ip;
+        }
+
+        count++;
+    }
+
+    return "";
+}
+
 string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
-    string receiver_ip_swap, last_return;
+    string last_return;
+    string units_concaterned;
+    string vmwares_concaterned;
+    
     string msg_hour = msg_based_on_hour();
 
     //adicionar cada nome dos itens em um novo vector item_names para exibir.
 
-    string item_type;
-    string padding;
-    string item_name_and_ip;
-    string quebrar_linha;
+    string item_name_and_ip, normal_report, elastic_incidents;
 
-    vector<string> std_msgs;
+    vector<string> vec_units, vec_vmwares, vec_azunits;
 
     int all_receivers_last_item;
     int receiver_last_item;
+    int count;
 
-    int count = 0;
+    count = 0;
     for (vector<string> receiver : all_receivers) {
 
         all_receivers_last_item = all_receivers.size() - 1; //posição final do vetor all_receivers
         receiver_last_item = receiver.size() - 1; //posição final do vetor receivers
 
         if (regex_search(receiver[0], regex("Unidade[^s]"))) {
-            item_type = "Unidade";
-            receiver_ip_swap = receiver[2];
-            padding = " | ";
-            std_msgs.push_back(" ");
-            std_msgs.push_back(" ip: ");
+            vec_units.push_back(receiver[1] + " (ip: " + receiver[2] + ")" + " - " + receiver[receiver_last_item]);
         }
 
         if (regex_search(receiver[0], regex("VMWare[^s]"))) {
-            item_type = "VMWare";
-            receiver_ip_swap = receiver[4];
-            padding = " | ";
-            std_msgs.push_back(" ");
-            std_msgs.push_back(" ip: ");
-        }        
+            vec_vmwares.push_back(receiver[1] + " (ip: " + receiver[4] + ":" + receiver[5] + ")" + " - " + receiver[receiver_last_item]);
+        }
+        
         if (regex_search(receiver[0], regex("(?:M.tricas)?(?:Unidades)?.*normalmente."))) {
-            item_type = "";
-            receiver_ip_swap = "";
-            padding = "";
-            std_msgs.push_back("");
-            std_msgs.push_back("");
-            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo..
+            normal_report = receiver[0];
         }
 
         if (regex_search(receiver[0], regex("Elastic"))) {
-            item_type = "";
-            receiver_ip_swap = "";
-            padding = "";
-            std_msgs.clear(); //limpar vector dos itens anteriores.
-            std_msgs.push_back("");
-            std_msgs.push_back("");
-            receiver.insert(receiver.begin(),""); //fazer com que o item 0 de receiver vire 1, adicionando ao inicio (0) qualquer conteudo.. assim ele ira ser pego la em baixo na variavel.
+            elastic_incidents = receiver[0];
         }
 
-        //se não for a primeira vez
-        if (count > 0) {
-            quebrar_linha = "\n";
-        }
+        //depois de colocar cada unidade com seus detalhes na vector, pegar cada linha da vector e fazer a linha de report
 
-        cout << "pre-string:" << quebrar_linha << item_type << std_msgs[0] << receiver[1] << std_msgs[1] << receiver_ip_swap << padding << receiver[receiver_last_item] << std_msgs[0] << endl << endl;
-        wait(500);cin.get();
+        units_concaterned = concatenador(vec_units, "Unidade");
+        vmwares_concaterned = concatenador(vec_vmwares, "VMWare");
+        
 
-        item_name_and_ip = item_name_and_ip
-        + quebrar_linha
-        + item_type
-        + std_msgs[0]
-        + receiver[1]
-        + std_msgs[1]
-        + receiver_ip_swap
-        + padding
-        + receiver[receiver_last_item]
-        + std_msgs[0];
-
-        count++;
     }
 
     //
@@ -723,7 +741,9 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
         "**CHECKLIST**\n\n"
         + msg_hour  //bom dia, segue o checklist:
         + "\n\n"    //quebra de linha dupla
-        + item_name_and_ip;
+        + units_concaterned
+        + vmwares_concaterned
+        + normal_report;
 
     if(last_item == true){
         copy_clipboard(last_return);
@@ -1001,6 +1021,8 @@ int main() {
             subfirst_q = getanswer("\nQuais outros problemas estao ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n");
 
             string ot_sys_questions = other_systems_questions(subfirst_q);
+
+            cout << "\n\not_sys_questions: " << ot_sys_questions << endl; wait(500); cin.get();
 
             //salvar string com incidentes do elastic e chamar final way
 
