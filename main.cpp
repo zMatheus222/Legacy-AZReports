@@ -90,8 +90,10 @@ string pickhour() {
     return hour;
 }
 
-string getanswer() {
+string getanswer(string question) {
 
+    cout << question;
+    
     string answer;
     getline(cin, answer);
     wait(550);
@@ -281,7 +283,7 @@ vector<string> detect_item_type_single(string item) {
         //se o usuario passou o nome / ip da unidade no cin
         if ((item == serverlists_ip) || (item == serverlists_host)) {
 
-            var_return = "\x1B[35mServidor (Host)\x1B[0m: " + serverlists_host + "\nIp: " + serverlists_ip + "\nPorta: " + serverlists_port + "\nDescricao: " + serverlists_descr + "\n";
+            var_return = "\x1B[35mUnidade (AZCorp)\x1B[0m: " + serverlists_host + "\nIp: " + serverlists_ip + "\nPorta: " + serverlists_port + "\nDescricao: " + serverlists_descr + "\n";
 
             vec_serverlists.push_back(var_return);
             vec_serverlists.push_back(serverlists_host);
@@ -350,15 +352,9 @@ vector<string> performance_questions(string received_item, string item_type, str
         if(regex_search(item_type, regex("Unidade"))){
 
             while(true){
+                limpar_tela();
 
-                cout << "\nJa tentou fazer o acesso SSH?";
-                cout << "\n[1] Sim, e consegui acesso";
-                cout << "\n[2] Tentei fazer mas nao consegui acesso";
-                cout << "\n\n#Acoes SSH";
-                cout << "\n[3] Copiar IP";
-                cout << "\n[4] Copiar IP e abrir PuTTY\n\n> ";
-                
-                resp_acessossh = getanswer();
+                resp_acessossh = getanswer("\nJa tentou fazer o acesso SSH?\n[1] Sim, e consegui acesso\n[2] Tentei fazer mas nao consegui acesso\n\n#Acoes SSH\n[3] Copiar IP\n[4] Copiar IP e abrir PuTTY\n\n> ");
 
                 if (resp_acessossh == "1") {
                     mensagens.push_back("com acesso ssh");
@@ -385,26 +381,17 @@ vector<string> performance_questions(string received_item, string item_type, str
 
             //o loop serve para que o item 3 não faça sair da pergunta, ou seja so ira sair quando a reposta for 1 ou 2.
             while(true){
-                cout << "Ja tentou fazer o acesso ui no navegador?";
-                cout << "\n[1] Sim, e consegui acesso";
-                cout << "\n[2] Tentei fazer mas nao consegui acesso";
-                cout << "\n\n#Acoes de acesso /ui";
-                cout << "\n[3] Gerar <ip>/ui e copiar para o Clipboard";
-                cout << "\n[4] Gerar <ip>/ui e abrir no navegador\n> ";
-
-                resp_acessoui = getanswer();
+                limpar_tela();
+                resp_acessoui = getanswer("Ja tentou fazer o acesso ui no navegador?\n[1] Sim, e consegui acesso\n[2] Tentei fazer mas nao consegui acesso\n\n#Acoes de acesso /ui\n[3] Gerar <ip>/ui e copiar para o Clipboard\n[4] Gerar <ip>/ui e abrir no navegador\n> ");
                 if (resp_acessoui == "1") { //consegui acesso no /ui
-                    
-                    cout << "\nConseguiu fazer login e senha no /ui?\n[1] Sim\n[2] Nao\n\n#Ferramentas:\n[3] Obter usuário e senha" << endl;
-                    string resp_loginsenha = getanswer();
+                
+                    string resp_loginsenha = getanswer("\nConseguiu fazer login e senha no /ui?\n[1] Sim\n[2] Nao\n\n#Ferramentas:\n[3] Obter usuário e senha\n");
 
                     if(resp_loginsenha == "1"){ //consegui fazer login e senha no /ui
 
-                        
-
+                        limpar_tela();
                         while(true){
-                            cout << "\nConseguiu ou fazer o docker restart <container_name> nessa vmware?\n[1] Sim\n[2] Nao\n\n#Ferramentas\n[3] Abrir PuTTY, e copiar o IP da maquina desta VMWare\n[4] Gerar docker restart <container_name> desta VMWare e copiar\n> " << endl;
-                            string resp_docker_restart = getanswer();
+                            string resp_docker_restart = getanswer("\nConseguiu ou fazer o docker restart <container_name> nessa vmware?\n[1] Sim\n[2] Nao\n\n#Ferramentas\n[3] Abrir PuTTY, e copiar o IP da maquina desta VMWare\n[4] Gerar docker restart <container_name> desta VMWare e copiar\n> ");
 
                             if(resp_docker_restart == "1"){ //consegui fazer docker restart
                                 mensagens.push_back("Ambiente normalizado");
@@ -492,19 +479,14 @@ string other_systems_questions(string received_item){
 
     if(regex_search("1", rgx_choices)){
 
-    cout << "\nA quanto tempo os cartoes nao coletam?";
-    cout << "\n[1] Nao coletaram hoje. ";
-    cout << "\n[2] Especificar tempo da ultima coleta\n> ";
-
-    resp_cartoes = getanswer();
+    resp_cartoes = getanswer("\nA quanto tempo os cartoes nao coletam?\n[1] Nao coletaram hoje. \n[2] Especificar tempo da ultima coleta\n> ");
 
         if(resp_cartoes == "1"){
             mensagens.push_back("Cartoes nao coletaram hoje.");
         }
 
         if(resp_cartoes == "2"){
-            cout << "\nDigite [DD/MM as HH:MM] (Dia Mês Hora e Minuto.)\n> ";
-            resp_cartoes_hour = getanswer();
+            resp_cartoes_hour = getanswer("\nDigite [DD/MM as HH:MM] (Dia Mês Hora e Minuto.)\n> ");
             mensagens.push_back("Cartoes nao coletam desde: " + resp_cartoes_hour);
         }
     }
@@ -513,8 +495,7 @@ string other_systems_questions(string received_item){
         //problemas relacionados a inventarios.
 
         if(resp_inventarios == "2"){
-            cout << "\nQual aba de inventario esta com problema?\n[1] Aba InfraOps\n[2] Aba CloudOps\n> " << endl;
-            resp_inventarios_which = getanswer();
+            resp_inventarios_which = getanswer("\nQual aba de inventario esta com problema?\n[1] Aba InfraOps\n[2] Aba CloudOps\n> ");
 
             if(regex_search(resp_inventarios_which, regex("^1$"))){
                 mensagens.push_back("Inventarios: Aba InfraOps nao esta trazendo metricas.");
@@ -533,11 +514,7 @@ string other_systems_questions(string received_item){
     if(regex_search("3", rgx_choices)){
         //problemas relacionados a Mastersaf - WEB (Up ou Down)
 
-        cout << "\nQuais das abas estao down?";
-        cout << "\n[1] OneSource PRD";
-        cout << "\n[2] DFE PRD\n> ";
-
-        resp_mastersaf = getanswer();
+        resp_mastersaf = getanswer("\nQuais das abas estao down?\n[1] OneSource PRD\n[2] DFE PRD\n> ");
 
         if(regex_search(resp_mastersaf, regex("^1$"))){
             mensagens.push_back("Mastersaf: Aba OneSource esta down.");
@@ -554,12 +531,7 @@ string other_systems_questions(string received_item){
     if(regex_search("4", rgx_choices)){
         //problemas relacionados a ordens de serviço
 
-        cout << "\nQuais problemas estao ocorrendo com as Ordens de serviço?";
-        cout << "\n[1] Ordem de serviço com mais de 40min";
-        cout << "" << endl;
-        cout << "\n[2] Kollector Status nao esta Running\n> ";
-
-        resp_ordensdservico = getanswer();
+        resp_ordensdservico = getanswer("\nQuais problemas estao ocorrendo com as Ordens de serviço?\n[1] Ordem de serviço com mais de 40min\n[2] Kollector Status nao esta Running\n> ");
 
         if(resp_ordensdservico == "1"){
             mensagens.push_back("Identificamos as seguintes ordens passando dos 40min:");
@@ -592,18 +564,7 @@ string other_systems_questions(string received_item){
                 elastic_initial_msg = "\nMais algum problema relacionado ao Elastic?";
             }
 
-            cout << elastic_initial_msg;
-            cout << "\n#Area do Elastic:";
-            cout << "\n[1] Dev";
-            cout << "\n[2] Prod";
-            cout << "\n#Problemas:";
-            cout << "\n[3] Clusters";
-            cout << "\n[4] Services";
-            cout << "\n[5] Traces";
-            cout << "\n[6] Stream";
-            cout << elastic_quit_msg << "\n>";
-
-            resp_elastic = getanswer();
+            resp_elastic = getanswer(elastic_initial_msg + "\n#Area do Elastic:\n[1] Dev\n[2] Prod\n#Problemas:\n[3] Clusters\n[4] Services\n[5] Traces\n[6] Stream" + elastic_quit_msg + "\n>");
 
             //elastic_area // prod ou dev
             if(regex_search(resp_elastic, regex("1"))){
@@ -617,8 +578,7 @@ string other_systems_questions(string received_item){
 
             if(regex_search(resp_elastic, regex("3"))){
                 
-                cout << "\nQual problema relacionado a cluster esta ocorrendo?\n[1] 'No monitoring data found'\n> ";
-                resp_elastic_clusters = getanswer();
+                resp_elastic_clusters = getanswer("\nQual problema relacionado a cluster esta ocorrendo?\n[1] 'No monitoring data found'\n> ");
 
                 if(resp_elastic_clusters == "1"){
                     elastic_problems.push_back("Aba cluster apresentando problemas na tentativa de acesso");
@@ -635,13 +595,11 @@ string other_systems_questions(string received_item){
             }
 
             if(regex_search(resp_elastic, regex("6"))){
-                
-                cout << "\nQual o problema relacionado a aba Stream?\n[1] Sem trazer logs a X tempo\n> ";
-                resp_elastic_stream = getanswer();
+            
+                resp_elastic_stream = getanswer("\nQual o problema relacionado a aba Stream?\n[1] Sem trazer logs a X tempo\n> ");
 
                 if(resp_elastic_stream == "1"){
-                    cout << "\nDigite o momento que a ultima log chegou [DD:MM / HH:MM] :\n> ";
-                    string resp_time = getanswer();
+                    string resp_time = getanswer("\nDigite o momento que a ultima log chegou [DD:MM / HH:MM] :\n> ");
                     elastic_problems.push_back("Aba stream sem trazer logs, ultima log recebida as: " + resp_time);
                 }
 
@@ -696,26 +654,28 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
 
     int all_receivers_last_item;
     int receiver_last_item;
+
     int count = 0;
     for (vector<string> receiver : all_receivers) {
 
         all_receivers_last_item = all_receivers.size() - 1; //posição final do vetor all_receivers
         receiver_last_item = receiver.size() - 1; //posição final do vetor receivers
 
-        if (regex_search(receiver[0], regex("Unidade"))) {
+        if (regex_search(receiver[0], regex("Unidade[^s]"))) {
             item_type = "Unidade";
             receiver_ip_swap = receiver[2];
             padding = " | ";
             std_msgs.push_back(" ");
             std_msgs.push_back(" ip: ");
         }
-        if (regex_search(receiver[0], regex("VMWare"))) {
+
+        if (regex_search(receiver[0], regex("VMWare[^s]"))) {
             item_type = "VMWare";
             receiver_ip_swap = receiver[4];
             padding = " | ";
             std_msgs.push_back(" ");
             std_msgs.push_back(" ip: ");
-        }
+        }        
         if (regex_search(receiver[0], regex("(?:M.tricas)?(?:Unidades)?.*normalmente."))) {
             item_type = "";
             receiver_ip_swap = "";
@@ -739,6 +699,9 @@ string final_way_several(vector<vector<string>> all_receivers, bool last_item) {
         if (count > 0) {
             quebrar_linha = "\n";
         }
+
+        cout << "pre-string:" << quebrar_linha << item_type << std_msgs[0] << receiver[1] << std_msgs[1] << receiver_ip_swap << padding << receiver[receiver_last_item] << std_msgs[0] << endl << endl;
+        wait(500);cin.get();
 
         item_name_and_ip = item_name_and_ip
         + quebrar_linha
@@ -791,6 +754,10 @@ int main() {
 
     setlocale(LC_ALL, "pt_BR.utf8");
 
+    int static unit_count = 0;
+    int static vmware_count = 0;
+    int static unit_azcorp_count = 0;
+
     string item, first_q, subfirst_q, incident_type, full_incidents, backup_last_full_incidents, item_ip, vmware_machine_number, vmware_container_name;
     vector<vector<string>> all_receivers;
     vector<vector<string>> bkp_all_receivers;
@@ -816,21 +783,14 @@ int main() {
             
             limpar_tela();
 
-            cout << "\n[1] Gerar report normalizado\n[2] Analisar um ou mais itens\n[3] Analisar e Reportar um ou mais itens\n[4] Outros Reports (Elastic, Cartoes e etc)\n[5] Encerrar programa\n\n> ";
-            first_q = getanswer();
+            first_q = getanswer("\n[1] Gerar report normalizado\n[2] Analisar um ou mais itens\n[3] Analisar e Reportar um ou mais itens\n[4] Outros Reports (Elastic, Cartoes e etc)\n[5] Encerrar programa\n\n> ");
             //transforma a resposda do usuario em uma regex para usar como comparação abaixo
 
         }
 
         if (regex_search(first_q, regex("[1]"))) {
 
-            cout << "\nDe qual empresa deseja gerar o report normalizado?";
-            cout << "\n\n[1] BRK Ambiental";
-            cout << "\n[2] Qualy System";
-            cout << "\n[3] Data System";
-            cout << "\n[4] Odontoprev\n\n> ";
-
-            subfirst_q = getanswer();
+            subfirst_q = getanswer("\nDe qual empresa deseja gerar o report normalizado?\n\n[1] BRK Ambiental\n[2] Qualy System\n[3] Data System\n[4] Odontoprev\n\n> ");
             
             if(subfirst_q == "1"){
                 receiver.push_back("Unidades, VMwares e Sistemas Linux estao funcionando normalmente.");
@@ -855,8 +815,7 @@ int main() {
 
         if(regex_search(first_q, regex("[23]"))){
 
-            cout << "\nDigite o item a ser analisado (\x1B[32mUnidade\x1B[0m, \x1B[36mVMWare\x1B[0m, IP, container_name):\n\n> ";
-            item = getanswer();
+            item = getanswer("\nDigite o item a ser analisado (\x1B[32mUnidade\x1B[0m, \x1B[36mVMWare\x1B[0m, IP, container_name):\n\n> ");
 
             //usuario podera colocar 1 ou mais itens, separados por virgula.
             // 
@@ -870,7 +829,7 @@ int main() {
                 items.push_back(smatch_comma_items[1]);
             }
             //
-
+            
             count = 0;
             for (string current_item : items) {
 
@@ -899,17 +858,22 @@ int main() {
                 //detectar se é Unidade ou VMWare
                 item_type = detect_type(receiver[0]);
 
-                //pegar ip do item
                 if(item_type == "Unidade"){
+
                     item_ip = receiver[2];
                     vmware_machine_number = "";
                     vmware_container_name = "";
+
                 }
                 if(item_type == "VMWare"){
+
                     item_ip = receiver[4];
                     vmware_machine_number = receiver[2];
                     vmware_container_name = receiver[3];
+
                 }
+
+
 
                 //ambas variaveis abaixo são vector<string>
                 //exibir todos os itens para o usuario no terminal passados pelo usuario na entrada e destacar o atual
@@ -953,17 +917,13 @@ int main() {
                     //até aqui o ultimo vector de  all_receivers ja foi preenchido com as informações
                     //e também já sabemos qual o tipo do item, VM ou unidade
 
-                    cout << "\nO que deseja fazer referente a " << item_type << " " << receiver[1] << " agora?:\n\n";
-                    cout  << "\033[33m[1] Criar novo report\033[0m\n[2] Copiar Hostname\n[3] Copiar IP\n[4] Copiar localizacao" << use_report << "\n\n> ";
-
-                    item = getanswer();
+                    item = getanswer("\nO que deseja fazer referente a " + item_type + " " + receiver[1] + " agora?:\n\n\033[33m[1] Criar novo report\033[0m\n[2] Copiar Hostname\n[3] Copiar IP\n[4] Copiar localizacao" + use_report + "\n\n> ");
 
                     if (item == "1") {
 
                         second_report = true; //essa var serve para fazer a opção 4 só depois que o primeiro report for realizado.
-
-                        cout << "\nQual foi o tipo de incidente? \n" << "[1] Queda\n[2] Consumo de CPU\n[3] Consumo de Memoria\n[4] Consumo de Disco\n[5] Memoria Swap\n[6] Sysload\n[7] Temperatura\n\n> ";
-                        item = getanswer();
+                        
+                        item = getanswer("\nQual foi o tipo de incidente? \n[1] Queda\n[2] Consumo de CPU\n[3] Consumo de Memoria\n[4] Consumo de Disco\n[5] Memoria Swap\n[6] Sysload\n[7] Temperatura\n\n> ");
 
                         //vector que ira ser preenchido com as respostas de desempenho, cpu, memoria etc
                         //depois iremos criar uma string concaternando as informações no for abaixo
@@ -1038,8 +998,7 @@ int main() {
         if(regex_search(first_q, regex("[4]")) && (last_item == true) || (regex_search(first_q, regex("^4$")))){
     
             //a ideia e que este report fique por ultimo de todos. por isso usamos last_item.
-            cout << "\nQuais outros problemas estao ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n" << endl;
-            subfirst_q = getanswer();
+            subfirst_q = getanswer("\nQuais outros problemas estao ocorrendo?\n[1] Coleta de cartoes\n[2] Inventarios\n[3] Mastersaf - WEB\n[4] CRM Ordens de servico\n[5] Elastic\n");
 
             string ot_sys_questions = other_systems_questions(subfirst_q);
 
